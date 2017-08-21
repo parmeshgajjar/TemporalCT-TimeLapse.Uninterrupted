@@ -1404,7 +1404,7 @@ namespace ShearBoxController_InspectXContinuousScan
 
         #region Panel - USB Connection
 
-
+        // see region Shearbox
 
         #endregion Panel - USB Connection
 
@@ -1523,6 +1523,8 @@ namespace ShearBoxController_InspectXContinuousScan
             {
                 // Retrieve index 
                 RetrieveIndex();
+                // Set textbox to profile
+                textBox_Profile.Text = mCTProfile;
                 // Update UI
                 UpdateUI();
 
@@ -1562,9 +1564,15 @@ namespace ShearBoxController_InspectXContinuousScan
 
         private void UpdateProfileList()
         {
+            int previousindex = mCTProfileIndex;
+            string previousprofile = mCTProfile;
             mCTProfileList = mChannels.CT3DScan.ProfileList();
             comboBoxProfile.DataSource = mCTProfileList;
             DisplayLog("Profile list updated");
+            textBox_Profile.Text = previousprofile;
+            comboBoxProfile.SelectedIndex = previousindex;
+            if (previousindex ==-1)
+                mCTProfile = previousprofile;
             RetrieveIndex();
         }
 
@@ -1581,6 +1589,33 @@ namespace ShearBoxController_InspectXContinuousScan
                 mCTProfile = mCTProfileList[mCTProfileIndex];
                 // Notify that profile loaded
                 DisplayLog(@"Profile '" + mCTProfile + @"' loaded");
+            }
+            if (mCTProfileIndex == -1)
+            {
+                // Set Application state
+                mApplicationState = EApplicationState.Ready;
+                // Set profile
+                mCTProfile = textBox_Profile.Text;
+                // Notify that profile loaded
+                DisplayLog(@"Profile '" + mCTProfile + @"' loaded");
+            }
+        }
+
+        /// <summary>
+        /// Browse for profile
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button_BrowseProfile_Click(object sender, EventArgs e)
+        {
+            // Open dialog
+            DialogResult openCTprofiledialog = openFileDialogCTProfile.ShowDialog();
+            // If dialog successful then change profile accordingly
+            if (openCTprofiledialog == System.Windows.Forms.DialogResult.OK)
+            {
+                textBox_Profile.Text = openFileDialogCTProfile.FileName;
+                comboBoxProfile.SelectedIndex = -1;
+                mCTProfileIndex = -1;
             }
         }
 
@@ -1808,7 +1843,7 @@ namespace ShearBoxController_InspectXContinuousScan
             {
                 switch (mShearBoxState)
                 {
-                    case EShearBoxState.Idle :
+                    case EShearBoxState.Idle:
                         box_CurrentShearBoxState.BackColor = Color.Green;
                         box_CurrentShearBoxState.Text = "Idle";
                         break;
@@ -2072,9 +2107,9 @@ namespace ShearBoxController_InspectXContinuousScan
                 // Set flags to zero
                 mManipulatorGoStarted = false;
                 mManipulatorGoCompleted = false;
-            
+
                 // Set target
-                mChannels.Manipulator.Axis.Target(IpcContract.Manipulator.EAxisName.Rotate,ReturnAngles[i]);
+                mChannels.Manipulator.Axis.Target(IpcContract.Manipulator.EAxisName.Rotate, ReturnAngles[i]);
                 // Start moving
                 mChannels.Manipulator.Axis.Go(IpcContract.Manipulator.EAxisName.Rotate);
                 // Wait until stopped moving
@@ -2350,7 +2385,7 @@ namespace ShearBoxController_InspectXContinuousScan
             // Purge communications
             mUSBConnectionState = mFtdiDevice.PurgeBuffer();
             UpdateUI();
-  
+
             // Check that connection was successful
             if (mUSBConnectionState == FTDIdevice.EUSBStatus.Connected)
                 DisplayLog("USB Device successfully connected");
@@ -2444,6 +2479,8 @@ namespace ShearBoxController_InspectXContinuousScan
         }
 
         #endregion ShearBox
+
+
 
 
 

@@ -133,13 +133,13 @@
             // 
             // button_BrowseProfile
             // 
-            this.button_BrowseProfile.Enabled = false;
             this.button_BrowseProfile.Location = new System.Drawing.Point(363, 57);
             this.button_BrowseProfile.Name = "button_BrowseProfile";
             this.button_BrowseProfile.Size = new System.Drawing.Size(105, 25);
             this.button_BrowseProfile.TabIndex = 18;
             this.button_BrowseProfile.Text = "Browse Profile";
             this.button_BrowseProfile.UseVisualStyleBackColor = true;
+            this.button_BrowseProfile.Click += new System.EventHandler(this.button_BrowseProfile_Click);
             // 
             // label_CTProfile
             // 
@@ -156,7 +156,6 @@
             // 
             this.textBox_Profile.BackColor = System.Drawing.SystemColors.Control;
             this.textBox_Profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.textBox_Profile.Enabled = false;
             this.textBox_Profile.Location = new System.Drawing.Point(14, 61);
             this.textBox_Profile.Name = "textBox_Profile";
             this.textBox_Profile.ReadOnly = true;
@@ -181,7 +180,7 @@
             this.comboBoxProfile.Name = "comboBoxProfile";
             this.comboBoxProfile.Size = new System.Drawing.Size(343, 21);
             this.comboBoxProfile.TabIndex = 14;
-            this.comboBoxProfile.Click += new System.EventHandler(this.comboBoxProfile_SelectedIndexChanged);
+            this.comboBoxProfile.SelectedIndexChanged += new System.EventHandler(this.comboBoxProfile_SelectedIndexChanged);
             // 
             // panel_InspectXConnection
             // 
@@ -556,6 +555,7 @@
             this.button_BrowseDirectory.TabIndex = 19;
             this.button_BrowseDirectory.Text = "Browse Directory";
             this.button_BrowseDirectory.UseVisualStyleBackColor = true;
+            this.button_BrowseDirectory.Click += new System.EventHandler(this.btn_Browse_Click);
             // 
             // textBox_RootDirectory
             // 

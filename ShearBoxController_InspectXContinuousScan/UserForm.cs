@@ -1570,10 +1570,9 @@ namespace ShearBoxController_InspectXContinuousScan
             comboBoxProfile.DataSource = mCTProfileList;
             DisplayLog("Profile list updated");
             textBox_Profile.Text = previousprofile;
-            comboBoxProfile.SelectedIndex = previousindex;
-            if (previousindex ==-1)
+            if (previousindex == -1)
                 mCTProfile = previousprofile;
-            RetrieveIndex();
+            comboBoxProfile.SelectedIndex = previousindex;
         }
 
         private void RetrieveIndex()

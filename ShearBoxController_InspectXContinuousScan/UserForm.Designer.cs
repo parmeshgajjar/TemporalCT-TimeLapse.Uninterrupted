@@ -1,6 +1,6 @@
-﻿namespace IPCTemplate
+﻿namespace ShearBoxController_InspectXContinuousScan
 {
-	partial class UserForm
+	partial class ShearBoxController_InspectXContinuousScanForm
 	{
 		/// <summary>
 		/// Required designer variable.
@@ -68,6 +68,8 @@
             this.label_USBConnectionPanel = new System.Windows.Forms.Label();
             this.btn_USBDisconnect = new System.Windows.Forms.Button();
             this.panel_ProjectSettings = new System.Windows.Forms.Panel();
+            this.checkBox_ManualReturnManipulatorToZero = new System.Windows.Forms.CheckBox();
+            this.label_ManualReturnManipulatorToZero = new System.Windows.Forms.Label();
             this.numericUpDown_NumberOfShearCycles = new System.Windows.Forms.NumericUpDown();
             this.label_ShearCycles = new System.Windows.Forms.Label();
             this.button_BrowseDirectory = new System.Windows.Forms.Button();
@@ -240,7 +242,6 @@
             // 
             this.panel_CurrentShearBoxState.Controls.Add(this.box_CurrentShearBoxState);
             this.panel_CurrentShearBoxState.Controls.Add(this.label_CurrentShearBoxState);
-            this.panel_CurrentShearBoxState.Enabled = false;
             this.panel_CurrentShearBoxState.Location = new System.Drawing.Point(326, 78);
             this.panel_CurrentShearBoxState.Name = "panel_CurrentShearBoxState";
             this.panel_CurrentShearBoxState.Size = new System.Drawing.Size(142, 47);
@@ -325,7 +326,6 @@
             // 
             this.panel_USBConnectionStatus.Controls.Add(this.box_USBConnection);
             this.panel_USBConnectionStatus.Controls.Add(this.label_USBConnection);
-            this.panel_USBConnectionStatus.Enabled = false;
             this.panel_USBConnectionStatus.Location = new System.Drawing.Point(326, 25);
             this.panel_USBConnectionStatus.Name = "panel_USBConnectionStatus";
             this.panel_USBConnectionStatus.Size = new System.Drawing.Size(142, 47);
@@ -453,7 +453,6 @@
             this.panel_USBConnection.Controls.Add(this.btn_USBConnect);
             this.panel_USBConnection.Controls.Add(this.label_USBConnectionPanel);
             this.panel_USBConnection.Controls.Add(this.btn_USBDisconnect);
-            this.panel_USBConnection.Enabled = false;
             this.panel_USBConnection.Location = new System.Drawing.Point(12, 73);
             this.panel_USBConnection.Name = "panel_USBConnection";
             this.panel_USBConnection.Size = new System.Drawing.Size(471, 55);
@@ -467,6 +466,7 @@
             this.btn_USBConnect.TabIndex = 3;
             this.btn_USBConnect.Text = "Connect";
             this.btn_USBConnect.UseVisualStyleBackColor = true;
+            this.btn_USBConnect.Click += new System.EventHandler(this.btn_USBConnect_Click);
             // 
             // label_USBConnectionPanel
             // 
@@ -487,9 +487,12 @@
             this.btn_USBDisconnect.TabIndex = 4;
             this.btn_USBDisconnect.Text = "Disconnect";
             this.btn_USBDisconnect.UseVisualStyleBackColor = true;
+            this.btn_USBDisconnect.Click += new System.EventHandler(this.btn_USBDisconnect_Click);
             // 
             // panel_ProjectSettings
             // 
+            this.panel_ProjectSettings.Controls.Add(this.checkBox_ManualReturnManipulatorToZero);
+            this.panel_ProjectSettings.Controls.Add(this.label_ManualReturnManipulatorToZero);
             this.panel_ProjectSettings.Controls.Add(this.numericUpDown_NumberOfShearCycles);
             this.panel_ProjectSettings.Controls.Add(this.label_ShearCycles);
             this.panel_ProjectSettings.Controls.Add(this.button_BrowseDirectory);
@@ -503,16 +506,35 @@
             this.panel_ProjectSettings.Size = new System.Drawing.Size(471, 107);
             this.panel_ProjectSettings.TabIndex = 7;
             // 
+            // checkBox_ManualReturnManipulatorToZero
+            // 
+            this.checkBox_ManualReturnManipulatorToZero.AutoSize = true;
+            this.checkBox_ManualReturnManipulatorToZero.Location = new System.Drawing.Point(435, 85);
+            this.checkBox_ManualReturnManipulatorToZero.Name = "checkBox_ManualReturnManipulatorToZero";
+            this.checkBox_ManualReturnManipulatorToZero.Size = new System.Drawing.Size(15, 14);
+            this.checkBox_ManualReturnManipulatorToZero.TabIndex = 23;
+            this.checkBox_ManualReturnManipulatorToZero.UseVisualStyleBackColor = true;
+            this.checkBox_ManualReturnManipulatorToZero.CheckedChanged += new System.EventHandler(this.checkBox_ManualReturnManipulatorToZero_CheckedChanged);
+            // 
+            // label_ManualReturnManipulatorToZero
+            // 
+            this.label_ManualReturnManipulatorToZero.AutoSize = true;
+            this.label_ManualReturnManipulatorToZero.Location = new System.Drawing.Point(262, 85);
+            this.label_ManualReturnManipulatorToZero.Name = "label_ManualReturnManipulatorToZero";
+            this.label_ManualReturnManipulatorToZero.Size = new System.Drawing.Size(174, 13);
+            this.label_ManualReturnManipulatorToZero.TabIndex = 22;
+            this.label_ManualReturnManipulatorToZero.Text = "Manually return manipulator to zero:";
+            // 
             // numericUpDown_NumberOfShearCycles
             // 
-            this.numericUpDown_NumberOfShearCycles.Location = new System.Drawing.Point(94, 81);
+            this.numericUpDown_NumberOfShearCycles.Location = new System.Drawing.Point(94, 83);
             this.numericUpDown_NumberOfShearCycles.Maximum = new decimal(new int[] {
             500,
             0,
             0,
             0});
             this.numericUpDown_NumberOfShearCycles.Name = "numericUpDown_NumberOfShearCycles";
-            this.numericUpDown_NumberOfShearCycles.Size = new System.Drawing.Size(137, 20);
+            this.numericUpDown_NumberOfShearCycles.Size = new System.Drawing.Size(87, 20);
             this.numericUpDown_NumberOfShearCycles.TabIndex = 21;
             this.numericUpDown_NumberOfShearCycles.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.numericUpDown_NumberOfShearCycles.ValueChanged += new System.EventHandler(this.numericUpDown_NumberOfShearCycles_ValueChanged);
@@ -594,7 +616,7 @@
             this.backgroundWorker_MainRoutine.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_MainRoutine_DoWork);
             this.backgroundWorker_MainRoutine.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_MainRoutine_RunWorkerCompleted);
             // 
-            // UserForm
+            // ShearBoxController_InspectXContinuousScanForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -607,8 +629,9 @@
             this.Controls.Add(this.panel_CTProfile);
             this.Controls.Add(this.btn_Start);
             this.Controls.Add(this.btn_Stop);
-            this.Name = "UserForm";
+            this.Name = "ShearBoxController_InspectXContinuousScanForm";
             this.Text = "Shearbox Controller - Inspect-X Continuous Rotating Scan";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.UserForm_FormClosing);
             this.panel_CTProfile.ResumeLayout(false);
             this.panel_CTProfile.PerformLayout();
             this.panel_InspectXConnection.ResumeLayout(false);
@@ -684,6 +707,8 @@
         private System.Windows.Forms.Label box_ApplicationState;
         public System.Windows.Forms.OpenFileDialog openFileDialogCTProfile;
         private System.ComponentModel.BackgroundWorker backgroundWorker_MainRoutine;
+        private System.Windows.Forms.CheckBox checkBox_ManualReturnManipulatorToZero;
+        private System.Windows.Forms.Label label_ManualReturnManipulatorToZero;
 	}
 }
 

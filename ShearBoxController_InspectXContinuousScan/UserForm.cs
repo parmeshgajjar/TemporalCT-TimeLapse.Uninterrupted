@@ -15,9 +15,9 @@ using System.Threading;
 using System.Diagnostics;
 using System.IO;
 
-namespace IPCTemplate
+namespace ShearBoxController_InspectXContinuousScan
 {
-    public partial class UserForm : Form
+    public partial class ShearBoxController_InspectXContinuousScanForm : Form
     {
         /// <summary>Are we in design mode</summary>
         protected bool mDesignMode { get; private set; }
@@ -68,8 +68,7 @@ namespace IPCTemplate
         /// <summary>
         /// USB Connection State
         /// </summary>
-        private enum EUSBConnectionState { Connected, Disconnected, Error }
-        private EUSBConnectionState mUSBConnectionState = EUSBConnectionState.Disconnected;
+        private FTDIdevice.EUSBStatus mUSBConnectionState = FTDIdevice.EUSBStatus.Disconnected;
 
         #endregion Status Enumeration Variables
 
@@ -102,16 +101,33 @@ namespace IPCTemplate
         private string mProjectDirectory = "";
 
         /// <summary>
-        /// Number of Shear Cycles
+        /// Number of Shear Cycles to perform
         /// </summary>
         private Int32 mNumberOfShearCycles = 0;
 
         /// <summary>
-        /// Shear cycles completed?
+        /// Number of shear cycles completed?
         /// </summary>
         private Int32 mShearCyclesCompleted = 0;
 
+        /// <summary>
+        /// Manually rotate manipulator back to zero?
+        /// </summary>
+        private bool mManualReturnManipulatorToZero = false;
+
+        /// <summary>
+        /// Angles to return to zero through
+        /// </summary>
+        private float[] ReturnAngles = new float[] { 270.0F, 180.0F, 90.0F, 0.0F };
+
         #endregion Project settings
+
+        #region USB and shearbox variables
+
+        /// <summary> FTDI Device for shearbox </summary>
+        private FTDIdevice_bitbang mFtdiDevice = null;
+
+        #endregion USB and shearbox variables
 
         #region Indicator Flags
 
@@ -121,8 +137,11 @@ namespace IPCTemplate
         // Scan Flag
         private bool mCTScanCompleted = false;
 
-        // User initiated stop
-        private bool mStop = false;
+        // Manipulator Go started
+        private bool mManipulatorGoStarted = false;
+
+        // Manipulator Go completed
+        private bool mManipulatorGoCompleted = false;
 
         #endregion Indicator Flags
 
@@ -132,7 +151,7 @@ namespace IPCTemplate
 
         #endregion Application Variables
 
-        public UserForm()
+        public ShearBoxController_InspectXContinuousScanForm()
         {
             try
             {
@@ -519,10 +538,10 @@ namespace IPCTemplate
                             // Your code goes here...
                             break;
                         case IpcContract.Manipulator.EMoveEvent.GoCompleted:
-                            // Your code goes here...
+                            mManipulatorGoCompleted = true;
                             break;
                         case IpcContract.Manipulator.EMoveEvent.GoStarted:
-                            // Your code goes here...
+                            mManipulatorGoStarted = true;
                             break;
                         case IpcContract.Manipulator.EMoveEvent.LoadPositionGoCompleted:
                             // Your code goes here...
@@ -1140,26 +1159,31 @@ namespace IPCTemplate
             }
 
             // Check connections and settings
-            if (ConnectionOK())
-                ProjectSettingsOK();
+            CheckConnectionsSettings();
 
-            // Layout Connect and Disconnect buttons
-            LayoutConnectDiconnectButtons();
+            // Layout Inspect-X Connect and Disconnect buttons
+            LayoutInspectXConnectDisconnectButtons();
             // Format Inspect-X Connection status
             FormatInspectXConnectionStatus();
+            // Layout USB Connect and Disconnect buttons
+            LayoutUSBConnectDisconnectButtons();
+            // Format USB Connection status
+            FormatUSBConnectionStatus();
             // Format Application status
             FormatApplicationStatus();
             // Format Current Running State
             FormatCurrentRunningState();
             // Format Current Inspect-X State
             FormatInspectXStatus();
+            // Format Current Shearbox State
+            FormatShearboxStatus();
 
         }
 
         /// <summary>
         /// Layout Connect and Disconnect buttons
         /// </summary>
-        private void LayoutConnectDiconnectButtons()
+        private void LayoutInspectXConnectDisconnectButtons()
         {
             switch (mInspectXConnectionState)
             {
@@ -1182,7 +1206,7 @@ namespace IPCTemplate
         /// Function checking whether Connection is OK
         /// </summary>
         /// <returns>True if connections are ok; false otherwise</returns>
-        private bool ConnectionOK()
+        private bool InspectXConnectionOK()
         {
             try
             {
@@ -1193,7 +1217,60 @@ namespace IPCTemplate
             {
                 AppLog.LogException(ex);
                 mApplicationState = EApplicationState.Error;
-                DisplayLog("Error in connection");
+                DisplayLog("Error in Inspect-X connection");
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Layout Connect and Disconnect buttons
+        /// </summary>
+        private void LayoutUSBConnectDisconnectButtons()
+        {
+            switch (mUSBConnectionState)
+            {
+                case FTDIdevice.EUSBStatus.Connected:
+                    btn_USBConnect.Enabled = false;
+                    btn_USBDisconnect.Enabled = true;
+                    break;
+                case FTDIdevice.EUSBStatus.Disconnected:
+                    btn_USBConnect.Enabled = true;
+                    btn_USBDisconnect.Enabled = false;
+                    break;
+                case FTDIdevice.EUSBStatus.Error:
+                    btn_USBConnect.Enabled = false;
+                    btn_USBDisconnect.Enabled = false;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Function to check connection and project settings
+        /// </summary>
+        private void CheckConnectionsSettings()
+        {
+            if (InspectXConnectionOK() && USBConnectionOK())
+                ProjectSettingsOK();
+            else
+                mApplicationState = EApplicationState.NoConnection;
+        }
+
+        /// <summary>
+        /// Function checking whether Connection is OK
+        /// </summary>
+        /// <returns>True if connections are ok; false otherwise</returns>
+        private bool USBConnectionOK()
+        {
+            try
+            {
+                if (mUSBConnectionState == FTDIdevice.EUSBStatus.Connected)
+                    return true;
+            }
+            catch (Exception ex)
+            {
+                AppLog.LogException(ex);
+                mApplicationState = EApplicationState.Error;
+                DisplayLog("Error in USB connection");
             }
             return false;
         }
@@ -1241,6 +1318,8 @@ namespace IPCTemplate
                 textBox_ProjectName.Text = mProjectName;
                 // set root directory text box to default value
                 textBox_RootDirectory.Text = mRootDirectory;
+                // set manually return tick box to default value
+                checkBox_ManualReturnManipulatorToZero.Checked = mManualReturnManipulatorToZero;
                 // Update profile list
                 UpdateProfileList();
                 // Update UI
@@ -1323,6 +1402,12 @@ namespace IPCTemplate
 
         #endregion Panel - CT Connection
 
+        #region Panel - USB Connection
+
+
+
+        #endregion Panel - USB Connection
+
         #region Panel - Project Settings
 
         /// <summary>
@@ -1383,6 +1468,26 @@ namespace IPCTemplate
                 AppLog.LogException(ex);
                 mApplicationState = EApplicationState.Error;
                 DisplayLog("Error in setting number of shear cycles");
+            }
+        }
+
+        /// <summary>
+        /// Function on UI for setting tick box for manually return manipulator to zero
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void checkBox_ManualReturnManipulatorToZero_CheckedChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                mManualReturnManipulatorToZero = checkBox_ManualReturnManipulatorToZero.Checked;
+                UpdateUI();
+            }
+            catch (Exception ex)
+            {
+                AppLog.LogException(ex);
+                mApplicationState = EApplicationState.Error;
+                DisplayLog("Error in setting manual return to zero");
             }
         }
 
@@ -1494,14 +1599,12 @@ namespace IPCTemplate
                     box_InspectXConnection.BackColor = Color.Green;
                     box_InspectXConnection.Text = "Connected";
                     panel_CTProfile.Enabled = true;
-                    panel_USBConnection.Enabled = false;
                     panel_ProjectSettings.Enabled = true;
                     break;
                 case Channels.EConnectionState.NoServer:
                     box_InspectXConnection.BackColor = Color.Gray;
                     box_InspectXConnection.Text = "No Server";
                     panel_CTProfile.Enabled = false;
-                    panel_USBConnection.Enabled = false;
                     panel_ProjectSettings.Enabled = false;
                     btn_Start.Enabled = false;
                     break;
@@ -1509,7 +1612,36 @@ namespace IPCTemplate
                     box_InspectXConnection.BackColor = Color.Red;
                     box_InspectXConnection.Text = "Connection Error";
                     panel_CTProfile.Enabled = false;
-                    panel_USBConnection.Enabled = false;
+                    panel_ProjectSettings.Enabled = false;
+                    btn_Start.Enabled = false;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Format Connection status
+        /// </summary>
+        private void FormatUSBConnectionStatus()
+        {
+            switch (mUSBConnectionState)
+            {
+                case FTDIdevice.EUSBStatus.Connected:
+                    box_USBConnection.BackColor = Color.Green;
+                    box_USBConnection.Text = "Connected";
+                    panel_CTProfile.Enabled = true;
+                    panel_ProjectSettings.Enabled = true;
+                    break;
+                case FTDIdevice.EUSBStatus.Disconnected:
+                    box_USBConnection.BackColor = Color.Gray;
+                    box_USBConnection.Text = "Disconnected";
+                    panel_CTProfile.Enabled = false;
+                    panel_ProjectSettings.Enabled = false;
+                    btn_Start.Enabled = false;
+                    break;
+                case FTDIdevice.EUSBStatus.Error:
+                    box_USBConnection.BackColor = Color.Red;
+                    box_USBConnection.Text = "Connection Error";
+                    panel_CTProfile.Enabled = false;
                     panel_ProjectSettings.Enabled = false;
                     btn_Start.Enabled = false;
                     break;
@@ -1528,7 +1660,7 @@ namespace IPCTemplate
                     box_ApplicationState.Text = "Ready";
                     panel_InspectXConnection.Enabled = true;
                     panel_CTProfile.Enabled = true;
-                    panel_USBConnection.Enabled = false;
+                    panel_USBConnection.Enabled = true;
                     panel_ProjectSettings.Enabled = true;
                     btn_Start.Enabled = true;
                     btn_Start.Visible = true;
@@ -1552,7 +1684,7 @@ namespace IPCTemplate
                     box_ApplicationState.Text = "Not Set Up";
                     panel_InspectXConnection.Enabled = true;
                     panel_CTProfile.Enabled = true;
-                    panel_USBConnection.Enabled = false;
+                    panel_USBConnection.Enabled = true;
                     panel_ProjectSettings.Enabled = true;
                     btn_Start.Enabled = false;
                     btn_Start.Visible = true;
@@ -1564,7 +1696,7 @@ namespace IPCTemplate
                     box_ApplicationState.Text = "No Connection";
                     panel_InspectXConnection.Enabled = true;
                     panel_CTProfile.Enabled = false;
-                    panel_USBConnection.Enabled = false;
+                    panel_USBConnection.Enabled = true;
                     panel_ProjectSettings.Enabled = false;
                     btn_Start.Enabled = false;
                     btn_Start.Visible = true;
@@ -1576,7 +1708,7 @@ namespace IPCTemplate
                     box_ApplicationState.Text = "Application Error";
                     panel_InspectXConnection.Enabled = true;
                     panel_CTProfile.Enabled = false;
-                    panel_USBConnection.Enabled = false;
+                    panel_USBConnection.Enabled = true;
                     panel_ProjectSettings.Enabled = false;
                     btn_Start.Enabled = false;
                     btn_Start.Visible = true;
@@ -1655,8 +1787,8 @@ namespace IPCTemplate
                         box_CurrentRunningState.Text = "Red";
                         break;
                     default:
-                        box_CurrentInspectXState.BackColor = SystemColors.Control;
-                        box_CurrentInspectXState.Text = "";
+                        box_CurrentRunningState.BackColor = SystemColors.Control;
+                        box_CurrentRunningState.Text = "";
                         break;
                 }
             }
@@ -1667,8 +1799,94 @@ namespace IPCTemplate
             }
         }
 
+        /// <summary>
+        /// Format Shearbox Status
+        /// </summary>
+        private void FormatShearboxStatus()
+        {
+            if (mApplicationState == EApplicationState.Running)
+            {
+                switch (mShearBoxState)
+                {
+                    case EShearBoxState.Idle :
+                        box_CurrentShearBoxState.BackColor = Color.Green;
+                        box_CurrentShearBoxState.Text = "Idle";
+                        break;
+                    case EShearBoxState.InMotion:
+                        box_CurrentShearBoxState.BackColor = Color.Blue;
+                        box_CurrentShearBoxState.Text = "In motion";
+                        break;
+                    case EShearBoxState.Error:
+                        box_CurrentShearBoxState.BackColor = Color.Red;
+                        box_CurrentShearBoxState.Text = "Error";
+                        break;
+                    default:
+                        box_CurrentShearBoxState.BackColor = SystemColors.Control;
+                        box_CurrentShearBoxState.Text = "";
+                        break;
+                }
+            }
+            else
+            {
+                box_CurrentShearBoxState.BackColor = SystemColors.Control;
+                box_CurrentShearBoxState.Text = "";
+            }
+        }
 
         #endregion Panel - System Status
+
+        #region Start-Stop buttons
+
+        /// <summary>
+        /// Function run when start button is pressed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btn_Start_Click(object sender, EventArgs e)
+        {
+            mApplicationState = EApplicationState.Running;
+            UpdateUI();
+            backgroundWorker_MainRoutine.RunWorkerAsync();
+        }
+
+        /// <summary>
+        /// Function run when stop button is pressed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btn_Stop_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                DisplayLog("User initiated cancellation of process");
+
+                // If application is running then try to cancel
+                if (mApplicationState == EApplicationState.Running)
+                {
+                    if (mInspectXState == EInspectXState.AcquireShadingCorrection)
+                    {
+                        mChannels.CT3DScan.AbortShadingCorrectionUpdate();
+                    }
+                    else if (mInspectXState == EInspectXState.CTScanAcquiring)
+                    {
+                        mChannels.CT3DScan.Abort();
+                    }
+                    // Cancel background worker
+                    backgroundWorker_MainRoutine.CancelAsync();
+                    Thread.Sleep(5000);
+                    mApplicationState = EApplicationState.Ready;
+                    UpdateUI();
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLog.LogException(ex);
+                mApplicationState = EApplicationState.Error;
+                DisplayLog("Error when clicking Stop button");
+            }
+        }
+
+        #endregion Start-Stop buttons
 
         #endregion User Interface
 
@@ -1755,6 +1973,12 @@ namespace IPCTemplate
                 // Write to file
                 logfile.Write(outputtext);
 
+                // Log message
+                DisplayLog("Written " + outputfilename);
+
+                // Write to file
+                logfile.WriteLine(DateTime.Now.ToString("dd/MM/yyyy H:mm:ss.fff") + " : Written " + outputfilename);
+
                 //Close file
                 logfile.Close();
             }
@@ -1785,6 +2009,12 @@ namespace IPCTemplate
                 // Write to file
                 logfile.Write(outputtext);
 
+                // Log message
+                DisplayLog("Written " + outputfilename);
+
+                // Write to file
+                logfile.WriteLine(DateTime.Now.ToString("dd/MM/yyyy H:mm:ss.fff") + " : Written " + outputfilename);
+
                 //Close file
                 logfile.Close();
             }
@@ -1810,8 +2040,15 @@ namespace IPCTemplate
                 // Write to file
                 outputfile.Write(aOutputText);
 
+                // Log message
+                DisplayLog("Written " + outputfilename);
+
+                // Write to file
+                outputfile.WriteLine(DateTime.Now.ToString("dd/MM/yyyy H:mm:ss.fff") + " : Written " + outputfilename);
+
                 //Close file
                 outputfile.Close();
+
             }
             catch (Exception ex)
             {
@@ -1820,6 +2057,34 @@ namespace IPCTemplate
         }
 
         #endregion Output
+
+        #region Manipulator Functions
+
+        /// <summary>
+        /// Function to manually return manipulator to zero
+        /// </summary>
+        private void ReturnManipulatorToZero()
+        {
+            DisplayLog("Returning manipulator to zero...");
+            // Loop through each value in the list
+            for (int i = 0; i < ReturnAngles.Length; i++)
+            {
+                // Set flags to zero
+                mManipulatorGoStarted = false;
+                mManipulatorGoCompleted = false;
+            
+                // Set target
+                mChannels.Manipulator.Axis.Target(IpcContract.Manipulator.EAxisName.Rotate,ReturnAngles[i]);
+                // Start moving
+                mChannels.Manipulator.Axis.Go(IpcContract.Manipulator.EAxisName.Rotate);
+                // Wait until stopped moving
+                while (!mManipulatorGoStarted || !mManipulatorGoCompleted)
+                    Thread.Sleep(100);
+            }
+            DisplayLog("Manipulator returned to zero...");
+        }
+
+        #endregion Manipulator Functions
 
         #region XCT Scan
 
@@ -1899,19 +2164,23 @@ namespace IPCTemplate
             while (!mCTScanCompleted && !backgroundWorker_MainRoutine.CancellationPending)
                 Thread.Sleep(500);
 
+            // If needed, return manipulator manually to zero
+            if (mManualReturnManipulatorToZero)
+                ReturnManipulatorToZero();
+
+            // Final status messages
             if (!backgroundWorker_MainRoutine.CancellationPending)
                 DisplayLog("Scan '" + ScanName + "' completed successfully");
             else
                 DisplayLog("Scan '" + ScanName + "' terminated by user");
 
-            // Update running state
+            // Update State
             mRunningState = ERunningState.Idle;
             // Layout UI
             UpdateUI();
         }
 
         #endregion XCT Scan
-
 
         #region Main Routine
 
@@ -1920,19 +2189,73 @@ namespace IPCTemplate
         /// </summary>
         private void MainRoutine()
         {
+
+            // Create Directory 
+            CreateDirectory();
+
+            // Run Circular XCT Scan
             if (!backgroundWorker_MainRoutine.CancellationPending)
-            XCTScan(mProjectName + "_Test");
-        }
+                XCTScan(mProjectName + "_" + mShearCyclesCompleted.ToString("000"));
 
-        #endregion Main Routine
+            if (mNumberOfShearCycles > 0 && !backgroundWorker_MainRoutine.CancellationPending)
+            {
 
-        private void btn_Start_Click(object sender, EventArgs e)
-        {
-            mApplicationState = EApplicationState.Running;
+                // Set number of shears to zero
+                mShearCyclesCompleted = 0;
+
+                // Update shearbox state
+                mShearBoxState = EShearBoxState.InMotion;
+                mRunningState = ERunningState.ShearBox;
+                UpdateUI();
+                // Send signal to shear box
+                SendSignal(mFtdiDevice);
+
+                // Clear buffer
+                mUSBConnectionState = mFtdiDevice.PurgeBuffer();
+                UpdateUI();
+                // Restart communications
+                mUSBConnectionState = mFtdiDevice.RestartCommunications();
+                UpdateUI();
+                // Last button state reset
+                mFtdiDevice.lastButtonState = false;
+
+                // Cycle and wait for signal. 
+                while (mShearCyclesCompleted < mNumberOfShearCycles
+                    && mUSBConnectionState == FTDIdevice.EUSBStatus.Connected
+                    && !backgroundWorker_MainRoutine.CancellationPending)
+                {
+                    DisplayLog("Waiting for signal");
+                    mFtdiDevice.UARTProcessRxSignal();
+                }
+            }
+
+            // Check if cancelled by user
+            if (backgroundWorker_MainRoutine.CancellationPending)
+                DisplayLog("Program aborted by user");
+            else
+                DisplayLog(mShearCyclesCompleted.ToString() + " shear cycles completed successfully");
+
+            // Create complete log file
+            WriteOutputFile(@"output.log", mOutputLogText);
+
+            // Clear mOutputLogText
+            mOutputLogText = "";
+
+            // Update running state
+            mRunningState = ERunningState.Idle;
+
+            //Reset UI
             UpdateUI();
-            backgroundWorker_MainRoutine.RunWorkerAsync();
+
         }
 
+        #region Background workers
+
+        /// <summary>
+        /// Do Work Background worker
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void backgroundWorker_MainRoutine_DoWork(object sender, DoWorkEventArgs e)
         {
             // Run Main Routine
@@ -1940,43 +2263,193 @@ namespace IPCTemplate
             Thread.Sleep(5000);
         }
 
+        /// <summary>
+        /// Run Completed Background Worker
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void backgroundWorker_MainRoutine_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             mApplicationState = EApplicationState.Ready;
             UpdateUI();
         }
 
-        private void btn_Stop_Click(object sender, EventArgs e)
+        #endregion Background workers
+
+        #endregion Main Routine
+
+        #region ShearBox
+
+        #region UI functions
+
+
+        /// <summary>
+        /// Disconnect USB device
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btn_USBDisconnect_Click(object sender, EventArgs e)
         {
             try
             {
-                DisplayLog("User initiated cancellation of process");
-
-                // If application is running then try to cancel
-                if (mApplicationState == EApplicationState.Running)
-                {
-                    if (mInspectXState == EInspectXState.AcquireShadingCorrection)
-                    {
-                        mChannels.CT3DScan.AbortShadingCorrectionUpdate();
-                    }
-                    else if (mInspectXState == EInspectXState.CTScanAcquiring)
-                    {
-                        mChannels.CT3DScan.Abort();
-                    }
-                    // Cancel background worker
-                    backgroundWorker_MainRoutine.CancelAsync();
-                    Thread.Sleep(5000);
-                    mApplicationState = EApplicationState.Ready;
-                    UpdateUI();
-                }
+                if (mUSBConnectionState == FTDIdevice.EUSBStatus.Connected)
+                    mUSBConnectionState = mFtdiDevice.CloseDevice();
+                UpdateUI();
             }
-            catch (Exception ex)
+            catch (Exception ex) { AppLog.LogException(ex); }
+        }
+
+        /// <summary>
+        /// Connect USB device
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btn_USBConnect_Click(object sender, EventArgs e)
+        {
+            try
             {
-                AppLog.LogException(ex);
-                mApplicationState = EApplicationState.Error;
-                DisplayLog("Error when clicking Stop button");
+                InitialiseUSB();
+                UpdateUI();
+            }
+            catch (Exception ex) { AppLog.LogException(ex); }
+        }
+
+
+        #endregion UI functions
+
+        #region Special USB functions
+        /// <summary>
+        /// String of functions that initialises the USB
+        /// </summary>
+        private void InitialiseUSB()
+        {
+            DisplayLog("Connecting USB device...");
+
+            // FTDI device in bitbang mode
+            mFtdiDevice = new FTDIdevice_bitbang(this);
+
+            // Subscribe to appropriate events
+            mFtdiDevice.RisingEdgeSignal += new RisingEdgeSignalEventHandler(RisingSignalRecieved);
+
+            // Open device
+            mUSBConnectionState = mFtdiDevice.OpenDevice();
+            UpdateUI();
+
+            // Enable bit bang
+            mUSBConnectionState = mFtdiDevice.EnableBitBang();
+            UpdateUI();
+
+            // Set characteristics
+            mUSBConnectionState = mFtdiDevice.SetUpDeviceParameters();
+            UpdateUI();
+
+            // Pause read communications
+            mUSBConnectionState = mFtdiDevice.PauseCommunications();
+            UpdateUI();
+
+            // Purge communications
+            mUSBConnectionState = mFtdiDevice.PurgeBuffer();
+            UpdateUI();
+  
+            // Check that connection was successful
+            if (mUSBConnectionState == FTDIdevice.EUSBStatus.Connected)
+                DisplayLog("USB Device successfully connected");
+        }
+
+        /// <summary>
+        /// Function called when a rising signal is recieved
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="e"></param>
+        private void RisingSignalRecieved(object source, EventArgs e)
+        {
+            // Cast the FTDI from the source
+            FTDIdevice ftdiDevice = (FTDIdevice)source;
+            // Pause communications
+            mUSBConnectionState = ftdiDevice.PauseCommunications();
+            UpdateUI();
+            // Clear the buffer
+            mUSBConnectionState = ftdiDevice.PurgeBuffer();
+            UpdateUI();
+
+            DisplayLog("Signal Recieved");
+            // Update Shearbox state
+            mShearBoxState = EShearBoxState.Idle;
+            mRunningState = ERunningState.Idle;
+            UpdateUI();
+
+            // When signal recieved that shear completed then increase counter
+            ++mShearCyclesCompleted;
+
+            // Run Circular XCT Scan (after checking that program has not been cancelled)
+            if (!backgroundWorker_MainRoutine.CancellationPending)
+                XCTScan(mProjectName + "_" + mShearCyclesCompleted.ToString("000"));
+
+            if (mShearCyclesCompleted < mNumberOfShearCycles && !backgroundWorker_MainRoutine.CancellationPending)
+            {
+
+                // Update Shearbox state
+                mRunningState = ERunningState.ShearBox;
+                mShearBoxState = EShearBoxState.InMotion;
+                UpdateUI();
+                // Send signal to shear box
+                SendSignal(ftdiDevice);
+
+                // Restart communications
+                mUSBConnectionState = ftdiDevice.RestartCommunications();
+                UpdateUI();
             }
         }
+
+        /// <summary>
+        /// Send a signal to the USB device
+        /// </summary>
+        /// <param name="ftdiDevice"> FTDI device object </param>
+        private void SendSignal(FTDIdevice ftdiDevice)
+        {
+            DisplayLog("Sending Signal");
+
+            // high signal
+            mUSBConnectionState = ftdiDevice.Write(0x01);
+            UpdateUI();
+
+            // wait
+            Thread.Sleep(500);
+
+            // low signal
+            mUSBConnectionState = ftdiDevice.Write(0x00);
+            UpdateUI();
+
+            // wait
+            Thread.Sleep(250);
+
+            DisplayLog("Signal Sent. Waiting for response from shearbox...");
+        }
+        #endregion Special USB functions
+
+        /// <summary>
+        /// Additional calls for form closing to ensure that USB is closed properly. 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void UserForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            try
+            {
+                if (mUSBConnectionState == FTDIdevice.EUSBStatus.Connected)
+                    mFtdiDevice.CloseDevice();
+                UpdateUI();
+            }
+            catch (Exception ex) { AppLog.LogException(ex); }
+        }
+
+        #endregion ShearBox
+
+
+
+
+
+
 
 
 

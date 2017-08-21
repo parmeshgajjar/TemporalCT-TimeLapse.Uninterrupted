@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace IPCTemplate
+namespace ShearBoxController_InspectXContinuousScan
 {
 	static class Program
 	{
@@ -15,7 +15,7 @@ namespace IPCTemplate
 		{
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			Application.Run(new UserForm());
+			Application.Run(new ShearBoxController_InspectXContinuousScanForm());
 		}
 	}
 }

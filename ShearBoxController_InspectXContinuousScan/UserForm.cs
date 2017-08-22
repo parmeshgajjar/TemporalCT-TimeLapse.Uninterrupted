@@ -137,8 +137,11 @@ namespace ShearBoxController_InspectXContinuousScan
         // Scan Flag
         private bool mCTScanCompleted = false;
 
+        // Stop process?
+        private bool mStop = false;
+
         // Scan aborted
-        private bool mScanAborted = false;
+        private bool mScanAbortedSuccessfully = false;
 
         // Manipulator Go started
         private bool mManipulatorGoStarted = false;
@@ -636,8 +639,9 @@ namespace ShearBoxController_InspectXContinuousScan
                 {
                     if (this.InvokeRequired)
                         this.BeginInvoke((MethodInvoker)delegate { EventHandlerSubscriptionScanStatus(aSender, e); });
-                    else
+                    else   
                     {
+                        //Debug.Print("e.Status="+e.Status.ToString());
                         // Find out what type of status is being reported.
                         if (e.Status is Inspect_X_Definitions.CTStatusPreparingForAcquisition)
                         {
@@ -825,7 +829,7 @@ namespace ShearBoxController_InspectXContinuousScan
         {
             try
             {
-
+                //Debug.Print("status.Error=" + status.Error.ToString());
                 switch (status.Error)
                 {
                     case Inspect_X_Definitions.CTStatusAcquisitionCompleted.CTAcquisitionError.Unknown:
@@ -853,7 +857,7 @@ namespace ShearBoxController_InspectXContinuousScan
                         // Your code goes here
                         break;
                     case Inspect_X_Definitions.CTStatusAcquisitionCompleted.CTAcquisitionError.AbortedByUser:
-                        mScanAborted = true;
+                        mScanAbortedSuccessfully = true;
                         mInspectXState = EInspectXState.Idle;
                         UpdateUI();
                         break;
@@ -1345,6 +1349,15 @@ namespace ShearBoxController_InspectXContinuousScan
             }
         }
 
+        private void CheckIfStopped()
+        {
+            if (mStop)
+            {
+                btn_Start.Enabled = false;
+                btn_Stop.Enabled = false;
+            }
+        }
+
         #endregion Form Layout
 
         #region Panel - CT Connection
@@ -1762,6 +1775,9 @@ namespace ShearBoxController_InspectXContinuousScan
                     btn_Stop.Visible = false;
                     break;
             }
+
+            // Check if stop initiated
+            CheckIfStopped();
         }
 
 
@@ -1904,7 +1920,9 @@ namespace ShearBoxController_InspectXContinuousScan
         {
             try
             {
-                AbortRoutine();
+                mStop = true;
+                backgroundWorker_Abort.RunWorkerAsync();
+                UpdateUI();
             }
             catch (Exception ex)
             {
@@ -2312,17 +2330,16 @@ namespace ShearBoxController_InspectXContinuousScan
                 else if (mInspectXState == EInspectXState.CTScanAcquiring)
                 {
                     // set flag
-                    mScanAborted = false;
+                    mScanAbortedSuccessfully = false;
                     // abort scan
                     mChannels.CT3DScan.Abort();
-                    //// Wait until scan aborts
-                    //while (!mScanAborted)
-                    //    Thread.Sleep(100);
+                    // Wait until scan aborts
+                    while (!mScanAbortedSuccessfully)
+                        Thread.Sleep(100);
                 }
                 // Wait for things to settle down
                 Thread.Sleep(5000);
-                mApplicationState = EApplicationState.Ready;
-                UpdateUI();
+               
             }
         }
 
@@ -2521,6 +2538,27 @@ namespace ShearBoxController_InspectXContinuousScan
         }
 
         #endregion ShearBox
+
+        private void backgroundWorker_Abort_DoWork(object sender, DoWorkEventArgs e)
+        {
+            try
+            {
+                AbortRoutine();
+            }
+            catch (Exception ex)
+            {
+                AppLog.LogException(ex);
+                mApplicationState = EApplicationState.Error;
+                DisplayLog("Error aborting");
+            }
+        }
+
+        private void backgroundWorker_Abort_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            mApplicationState = EApplicationState.Ready;
+            mStop = false;
+            UpdateUI();
+        }
 
 
 

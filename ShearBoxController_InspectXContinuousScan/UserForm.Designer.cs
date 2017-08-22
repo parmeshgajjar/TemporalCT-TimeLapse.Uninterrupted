@@ -80,6 +80,7 @@
             this.label_ProjectSettings = new System.Windows.Forms.Label();
             this.openFileDialogCTProfile = new System.Windows.Forms.OpenFileDialog();
             this.backgroundWorker_MainRoutine = new System.ComponentModel.BackgroundWorker();
+            this.backgroundWorker_Abort = new System.ComponentModel.BackgroundWorker();
             this.panel_CTProfile.SuspendLayout();
             this.panel_InspectXConnection.SuspendLayout();
             this.panel_SystemStatus.SuspendLayout();
@@ -616,6 +617,11 @@
             this.backgroundWorker_MainRoutine.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_MainRoutine_DoWork);
             this.backgroundWorker_MainRoutine.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_MainRoutine_RunWorkerCompleted);
             // 
+            // backgroundWorker_Abort
+            // 
+            this.backgroundWorker_Abort.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_Abort_DoWork);
+            this.backgroundWorker_Abort.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_Abort_RunWorkerCompleted);
+            // 
             // ShearBoxController_InspectXContinuousScanForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -709,6 +715,7 @@
         private System.ComponentModel.BackgroundWorker backgroundWorker_MainRoutine;
         private System.Windows.Forms.CheckBox checkBox_ManualReturnManipulatorToZero;
         private System.Windows.Forms.Label label_ManualReturnManipulatorToZero;
+        private System.ComponentModel.BackgroundWorker backgroundWorker_Abort;
 	}
 }
 

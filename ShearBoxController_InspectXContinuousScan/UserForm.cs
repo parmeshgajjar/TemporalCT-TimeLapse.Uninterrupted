@@ -137,11 +137,20 @@ namespace ShearBoxController_InspectXContinuousScan
         // Scan Flag
         private bool mCTScanCompleted = false;
 
+        // Scan aborted
+        private bool mScanAborted = false;
+
         // Manipulator Go started
         private bool mManipulatorGoStarted = false;
 
         // Manipulator Go completed
         private bool mManipulatorGoCompleted = false;
+
+        // Manipulator Homing started
+        private bool mManipulatorHomingStarted = false;
+
+        // Manipulator Homing completed
+        private bool mManipulatorHomingCompleted = false;
 
         #endregion Indicator Flags
 
@@ -516,10 +525,10 @@ namespace ShearBoxController_InspectXContinuousScan
                     switch (e.MoveEvent)
                     {
                         case IpcContract.Manipulator.EMoveEvent.HomingStarted:
-                            // Your code goes here...
+                            mManipulatorHomingStarted = true;
                             break;
                         case IpcContract.Manipulator.EMoveEvent.HomingCompleted:
-                            // Your code goes here...
+                            mManipulatorHomingCompleted = true;
                             break;
                         case IpcContract.Manipulator.EMoveEvent.ManipulatorStartedMoving:
                             // Your code goes here...
@@ -823,7 +832,7 @@ namespace ShearBoxController_InspectXContinuousScan
                         // Your code goes here
                         break;
                     case Inspect_X_Definitions.CTStatusAcquisitionCompleted.CTAcquisitionError.NoError:
-                        // Your code goes here
+                        DisplayLog("Acquisition complete");
                         break;
                     case Inspect_X_Definitions.CTStatusAcquisitionCompleted.CTAcquisitionError.CTAbortedAsNoXrays:
                         // Your code goes here
@@ -844,7 +853,9 @@ namespace ShearBoxController_InspectXContinuousScan
                         // Your code goes here
                         break;
                     case Inspect_X_Definitions.CTStatusAcquisitionCompleted.CTAcquisitionError.AbortedByUser:
-                        // Your code goes here
+                        mScanAborted = true;
+                        mInspectXState = EInspectXState.Idle;
+                        UpdateUI();
                         break;
                     case Inspect_X_Definitions.CTStatusAcquisitionCompleted.CTAcquisitionError.DroppedFrames:
                         // Your code goes here
@@ -869,6 +880,7 @@ namespace ShearBoxController_InspectXContinuousScan
                 if (mInspectXState != EInspectXState.CTScanReconstructing)
                 {
                     mInspectXState = EInspectXState.CTScanReconstructing;
+                    DisplayLog("Reconstructing Volume");
                     UpdateUI();
                 }
                 switch (status.Detail)
@@ -902,7 +914,7 @@ namespace ShearBoxController_InspectXContinuousScan
                         // Your code goes here
                         break;
                     case Inspect_X_Definitions.CTStatusReconstructionCompleted.CTReconstructionError.NoError:
-                        // Your code goes here
+                        DisplayLog("Reconstruction complete");
                         break;
                     case Inspect_X_Definitions.CTStatusReconstructionCompleted.CTReconstructionError.Aborted:
                         // Your code goes here
@@ -1892,25 +1904,7 @@ namespace ShearBoxController_InspectXContinuousScan
         {
             try
             {
-                DisplayLog("User initiated cancellation of process");
-
-                // If application is running then try to cancel
-                if (mApplicationState == EApplicationState.Running)
-                {
-                    if (mInspectXState == EInspectXState.AcquireShadingCorrection)
-                    {
-                        mChannels.CT3DScan.AbortShadingCorrectionUpdate();
-                    }
-                    else if (mInspectXState == EInspectXState.CTScanAcquiring)
-                    {
-                        mChannels.CT3DScan.Abort();
-                    }
-                    // Cancel background worker
-                    backgroundWorker_MainRoutine.CancelAsync();
-                    Thread.Sleep(5000);
-                    mApplicationState = EApplicationState.Ready;
-                    UpdateUI();
-                }
+                AbortRoutine();
             }
             catch (Exception ex)
             {
@@ -2183,6 +2177,7 @@ namespace ShearBoxController_InspectXContinuousScan
                 {
                     // Set application state
                     mInspectXState = EInspectXState.CTScanAcquiring;
+                    DisplayLog("Acquiring projections");
                 }
                 else if (backgroundWorker_MainRoutine.CancellationPending)
                     DisplayLog("Scan '" + ScanName + "' immediately cancelled by user");
@@ -2226,6 +2221,20 @@ namespace ShearBoxController_InspectXContinuousScan
 
             // Create Directory 
             CreateDirectory();
+
+            // Check homing
+            if (!mChannels.Manipulator.Axis.Homed(IpcContract.Manipulator.EAxisName.All))
+            {
+                // Indicator flags
+                mManipulatorHomingStarted = false;
+                mManipulatorHomingCompleted = false;
+                DisplayLog("Homing Axis");
+                // Home all axes
+                mChannels.Manipulator.Axis.Home(IpcContract.Manipulator.EAxisName.All, true, false);
+                // Wait until finished
+                while (!mManipulatorHomingStarted || !mManipulatorHomingCompleted)
+                    Thread.Sleep(100);
+            }
 
             // Run Circular XCT Scan
             if (!backgroundWorker_MainRoutine.CancellationPending)
@@ -2281,6 +2290,40 @@ namespace ShearBoxController_InspectXContinuousScan
             //Reset UI
             UpdateUI();
 
+        }
+
+        /// <summary>
+        /// Abort routine
+        /// </summary>
+        private void AbortRoutine()
+        {
+            DisplayLog("User initiated cancellation of process");
+
+            // If application is running then try to cancel
+            if (mApplicationState == EApplicationState.Running)
+            {
+                // Cancel background worker
+                backgroundWorker_MainRoutine.CancelAsync();
+                // Cancel individual processes
+                if (mInspectXState == EInspectXState.AcquireShadingCorrection)
+                {
+                    mChannels.CT3DScan.AbortShadingCorrectionUpdate();
+                }
+                else if (mInspectXState == EInspectXState.CTScanAcquiring)
+                {
+                    // set flag
+                    mScanAborted = false;
+                    // abort scan
+                    mChannels.CT3DScan.Abort();
+                    //// Wait until scan aborts
+                    //while (!mScanAborted)
+                    //    Thread.Sleep(100);
+                }
+                // Wait for things to settle down
+                Thread.Sleep(5000);
+                mApplicationState = EApplicationState.Ready;
+                UpdateUI();
+            }
         }
 
         #region Background workers

@@ -47,7 +47,7 @@ namespace ShearBoxController_InspectXContinuousScan
         // Status variable
         protected FTDI.FT_STATUS ftStatus = FTDI.FT_STATUS.FT_OK;
         // Buffer size for read buffers
-        protected const uint bufferSize = 256;
+        protected const uint bufferSize = 2048;
         // Buffer
         protected byte[] buffer = new Byte[bufferSize];
         /// <summary> Status of the USB </summary>
@@ -202,8 +202,10 @@ namespace ShearBoxController_InspectXContinuousScan
         /// </summary>
         public EUSBStatus PurgeBuffer()
         {
-            // Purge (any) previous data in buffer.
+            // Purge (any) previous data in incoming buffer.
             ftStatus = myFtdiDevice.Purge(FTDI.FT_PURGE.FT_PURGE_RX);
+            // Clear data already in process buffer
+            Array.Clear(buffer, 0, (int)bufferSize);
 
             if (ftStatus != FTDI.FT_STATUS.FT_OK)
             {

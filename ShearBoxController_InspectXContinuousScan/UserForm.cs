@@ -2278,13 +2278,13 @@ namespace ShearBoxController_InspectXContinuousScan
 
                 // Clear buffer
                 mUSBConnectionState = mFtdiDevice.PurgeBuffer();
-                UpdateUI();
-                // Restart communications
-                mUSBConnectionState = mFtdiDevice.RestartCommunications();
+                mUSBConnectionState = mFtdiDevice.PauseCommunications();
                 UpdateUI();
                 // Last button state reset
                 mFtdiDevice.lastButtonState = false;
-
+                // Restart communications
+                mUSBConnectionState = mFtdiDevice.RestartCommunications();
+                UpdateUI();
                 // Cycle and wait for signal. 
                 while (mShearCyclesCompleted < mNumberOfShearCycles
                     && mUSBConnectionState == FTDIdevice.EUSBStatus.Connected
@@ -2493,7 +2493,11 @@ namespace ShearBoxController_InspectXContinuousScan
                 UpdateUI();
                 // Send signal to shear box
                 SendSignal(ftdiDevice);
-
+                // Pause communications
+                mUSBConnectionState = ftdiDevice.PauseCommunications();
+                UpdateUI();
+                // Clear the buffer
+                mUSBConnectionState = ftdiDevice.PurgeBuffer();
                 // Restart communications
                 mUSBConnectionState = ftdiDevice.RestartCommunications();
                 UpdateUI();

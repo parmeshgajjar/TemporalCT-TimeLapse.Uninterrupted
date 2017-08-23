@@ -20,13 +20,13 @@ namespace ShearBoxController_InspectXContinuousScan
         }
         
         // overloaded Standard constructor that accepts form variable
-        public FTDIdevice(ShearBoxController_InspectXContinuousScanForm aParentForm)
+        public FTDIdevice(ShearBoxController_FlyScanForm aParentForm)
         {
             mParentForm = aParentForm;
         }
 
         /// <summary> Parent Form that it links to </summary>
-        protected ShearBoxController_InspectXContinuousScanForm mParentForm;
+        protected ShearBoxController_FlyScanForm mParentForm;
 
         #region Device Constants
         // Device constants

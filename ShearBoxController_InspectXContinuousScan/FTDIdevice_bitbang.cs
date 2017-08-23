@@ -25,7 +25,7 @@ namespace ShearBoxController_InspectXContinuousScan
         }
 
         // Overloaded constructor
-        public FTDIdevice_bitbang(ShearBoxController_InspectXContinuousScanForm aParentForm)
+        public FTDIdevice_bitbang(ShearBoxController_FlyScanForm aParentForm)
         {
             mParentForm = aParentForm;
         }

@@ -15,7 +15,7 @@ namespace ShearBoxController_InspectXContinuousScan
 		{
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			Application.Run(new ShearBoxController_InspectXContinuousScanForm());
+			Application.Run(new ShearBoxController_FlyScanForm());
 		}
 	}
 }

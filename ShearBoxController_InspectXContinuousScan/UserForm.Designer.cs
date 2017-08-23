@@ -1,6 +1,6 @@
 ﻿namespace ShearBoxController_InspectXContinuousScan
 {
-	partial class ShearBoxController_InspectXContinuousScanForm
+	partial class ShearBoxController_FlyScanForm
 	{
 		/// <summary>
 		/// Required designer variable.
@@ -622,7 +622,7 @@
             this.backgroundWorker_Abort.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_Abort_DoWork);
             this.backgroundWorker_Abort.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_Abort_RunWorkerCompleted);
             // 
-            // ShearBoxController_InspectXContinuousScanForm
+            // ShearBoxController_FlyScanForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -635,7 +635,7 @@
             this.Controls.Add(this.panel_CTProfile);
             this.Controls.Add(this.btn_Start);
             this.Controls.Add(this.btn_Stop);
-            this.Name = "ShearBoxController_InspectXContinuousScanForm";
+            this.Name = "ShearBoxController_FlyScanForm";
             this.Text = "Shearbox Controller - Inspect-X Continuous Rotating Scan";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.UserForm_FormClosing);
             this.panel_CTProfile.ResumeLayout(false);

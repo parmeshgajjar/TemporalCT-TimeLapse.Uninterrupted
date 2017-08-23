@@ -17,7 +17,7 @@ using System.IO;
 
 namespace ShearBoxController_InspectXContinuousScan
 {
-    public partial class ShearBoxController_InspectXContinuousScanForm : Form
+    public partial class ShearBoxController_FlyScanForm : Form
     {
         /// <summary>Are we in design mode</summary>
         protected bool mDesignMode { get; private set; }
@@ -163,7 +163,7 @@ namespace ShearBoxController_InspectXContinuousScan
 
         #endregion Application Variables
 
-        public ShearBoxController_InspectXContinuousScanForm()
+        public ShearBoxController_FlyScanForm()
         {
             try
             {
@@ -1611,6 +1611,8 @@ namespace ShearBoxController_InspectXContinuousScan
                 mApplicationState = EApplicationState.Ready;
                 // Set profile
                 mCTProfile = mCTProfileList[mCTProfileIndex];
+                // Set textbox
+                textBox_Profile.Text = mCTProfile;
                 // Notify that profile loaded
                 DisplayLog(@"Profile '" + mCTProfile + @"' loaded");
             }
@@ -2240,6 +2242,9 @@ namespace ShearBoxController_InspectXContinuousScan
             // Create Directory 
             CreateDirectory();
 
+            // Reset number of shears completed
+            mShearCyclesCompleted = 0;
+
             // Check homing
             if (!mChannels.Manipulator.Axis.Homed(IpcContract.Manipulator.EAxisName.All))
             {
@@ -2514,8 +2519,8 @@ namespace ShearBoxController_InspectXContinuousScan
             mUSBConnectionState = ftdiDevice.Write(0x00);
             UpdateUI();
 
-            // wait
-            Thread.Sleep(250);
+            // wait (3 seconds)
+            Thread.Sleep(3000);
 
             DisplayLog("Signal Sent. Waiting for response from shearbox...");
         }
@@ -2559,6 +2564,7 @@ namespace ShearBoxController_InspectXContinuousScan
             mStop = false;
             UpdateUI();
         }
+
 
 
 

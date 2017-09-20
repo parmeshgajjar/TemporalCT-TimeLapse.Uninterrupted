@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyVersion("5.1.*")]	// Either "MajorV,MinorV,BuildNo,Rev" OR "M.M.*" where * encode date & time
 [assembly: AssemblyCompany("The University of Manchester")]
 [assembly: AssemblyProduct("XT 5.1.4")]
-[assembly: AssemblyTitle("ShearBox Controller using Inspect-X Continuous Rotation CT Scan")]
+[assembly: AssemblyTitle("Time-Lapse CT using Inspect-X Continuous Rotation CT Scan")]
 
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]

@@ -17,7 +17,7 @@ using System.IO;
 
 namespace ShearBoxController_InspectXContinuousScan
 {
-    public partial class ShearBoxController_FlyScanForm : Form
+    public partial class TimeLapse_FlyScanForm : Form
     {
         /// <summary>Are we in design mode</summary>
         protected bool mDesignMode { get; private set; }
@@ -45,7 +45,7 @@ namespace ShearBoxController_InspectXContinuousScan
         /// <summary>
         /// Running state of application
         /// </summary>
-        private enum ERunningState { Idle, CTScan, ShearBox, Error };
+        private enum ERunningState { Idle, CTScan, Error };
         private ERunningState mRunningState = ERunningState.Idle;
 
         /// <summary>
@@ -60,15 +60,10 @@ namespace ShearBoxController_InspectXContinuousScan
         private Channels.EConnectionState mInspectXConnectionState = Channels.EConnectionState.NoServer;
 
         /// <summary>
-        /// ShearBox State
+        /// Timer State
         /// </summary>
-        private enum EShearBoxState { Idle, InMotion, Error }
-        private EShearBoxState mShearBoxState = EShearBoxState.Idle;
-
-        /// <summary>
-        /// USB Connection State
-        /// </summary>
-        private FTDIdevice.EUSBStatus mUSBConnectionState = FTDIdevice.EUSBStatus.Disconnected;
+        private enum ETimerState { Idle, Running }
+        private ETimerState mTimerState = ETimerState.Idle;
 
         #endregion Status Enumeration Variables
 
@@ -101,14 +96,14 @@ namespace ShearBoxController_InspectXContinuousScan
         private string mProjectDirectory = "";
 
         /// <summary>
-        /// Number of Shear Cycles to perform
+        /// Number of Scans to perform
         /// </summary>
-        private Int32 mNumberOfShearCycles = 0;
+        private Int32 mNumberOfScans = 0;
 
         /// <summary>
-        /// Number of shear cycles completed?
+        /// Number of scans completed?
         /// </summary>
-        private Int32 mShearCyclesCompleted = 0;
+        private Int32 mScansCompleted = 0;
 
         /// <summary>
         /// Manually rotate manipulator back to zero?
@@ -121,13 +116,6 @@ namespace ShearBoxController_InspectXContinuousScan
         private float[] ReturnAngles = new float[] { 270.0F, 180.0F, 90.0F, 0.0F };
 
         #endregion Project settings
-
-        #region USB and shearbox variables
-
-        /// <summary> FTDI Device for shearbox </summary>
-        private FTDIdevice_bitbang mFtdiDevice = null;
-
-        #endregion USB and shearbox variables
 
         #region Indicator Flags
 
@@ -157,13 +145,29 @@ namespace ShearBoxController_InspectXContinuousScan
 
         #endregion Indicator Flags
 
+        #region Timer settings
+
+        // Timer interval that is calculated automatically from the values in numeric up-down buttons
+        public int mTimerInterval
+        {
+            get
+            {
+                return 60 * (System.Convert.ToInt32(numericUpDown_hours.Value) * 60
+                    + System.Convert.ToInt32(numericUpDown_minutes.Value));
+            }
+        }
+
+        // Stopwatch
+        public Stopwatch TimingWatch;
+
+        #endregion Timer settings
 
         /// <summary> Output log text that includes time and date stamps </summary>
         public string mOutputLogText = null;
 
         #endregion Application Variables
 
-        public ShearBoxController_FlyScanForm()
+        public TimeLapse_FlyScanForm()
         {
             try
             {
@@ -639,7 +643,7 @@ namespace ShearBoxController_InspectXContinuousScan
                 {
                     if (this.InvokeRequired)
                         this.BeginInvoke((MethodInvoker)delegate { EventHandlerSubscriptionScanStatus(aSender, e); });
-                    else   
+                    else
                     {
                         //Debug.Print("e.Status="+e.Status.ToString());
                         // Find out what type of status is being reported.
@@ -1181,18 +1185,14 @@ namespace ShearBoxController_InspectXContinuousScan
             LayoutInspectXConnectDisconnectButtons();
             // Format Inspect-X Connection status
             FormatInspectXConnectionStatus();
-            // Layout USB Connect and Disconnect buttons
-            LayoutUSBConnectDisconnectButtons();
-            // Format USB Connection status
-            FormatUSBConnectionStatus();
+            // Format Timer status
+            FormatTimerStatus();
             // Format Application status
             FormatApplicationStatus();
             // Format Current Running State
             FormatCurrentRunningState();
             // Format Current Inspect-X State
             FormatInspectXStatus();
-            // Format Current Shearbox State
-            FormatShearboxStatus();
 
         }
 
@@ -1239,57 +1239,16 @@ namespace ShearBoxController_InspectXContinuousScan
         }
 
         /// <summary>
-        /// Layout Connect and Disconnect buttons
-        /// </summary>
-        private void LayoutUSBConnectDisconnectButtons()
-        {
-            switch (mUSBConnectionState)
-            {
-                case FTDIdevice.EUSBStatus.Connected:
-                    btn_USBConnect.Enabled = false;
-                    btn_USBDisconnect.Enabled = true;
-                    break;
-                case FTDIdevice.EUSBStatus.Disconnected:
-                    btn_USBConnect.Enabled = true;
-                    btn_USBDisconnect.Enabled = false;
-                    break;
-                case FTDIdevice.EUSBStatus.Error:
-                    btn_USBConnect.Enabled = false;
-                    btn_USBDisconnect.Enabled = false;
-                    break;
-            }
-        }
-
-        /// <summary>
         /// Function to check connection and project settings
         /// </summary>
         private void CheckConnectionsSettings()
         {
-            if (InspectXConnectionOK() && USBConnectionOK())
+            if (InspectXConnectionOK())
                 ProjectSettingsOK();
             else
                 mApplicationState = EApplicationState.NoConnection;
         }
 
-        /// <summary>
-        /// Function checking whether Connection is OK
-        /// </summary>
-        /// <returns>True if connections are ok; false otherwise</returns>
-        private bool USBConnectionOK()
-        {
-            try
-            {
-                if (mUSBConnectionState == FTDIdevice.EUSBStatus.Connected)
-                    return true;
-            }
-            catch (Exception ex)
-            {
-                AppLog.LogException(ex);
-                mApplicationState = EApplicationState.Error;
-                DisplayLog("Error in USB connection");
-            }
-            return false;
-        }
 
         /// <summary>
         /// Function for checking whether project settings are ok 
@@ -1427,12 +1386,6 @@ namespace ShearBoxController_InspectXContinuousScan
 
         #endregion Panel - CT Connection
 
-        #region Panel - USB Connection
-
-        // see region Shearbox
-
-        #endregion Panel - USB Connection
-
         #region Panel - Project Settings
 
         /// <summary>
@@ -1485,7 +1438,7 @@ namespace ShearBoxController_InspectXContinuousScan
         {
             try
             {
-                mNumberOfShearCycles = (int)Math.Round(numericUpDown_NumberOfShearCycles.Value);
+                mNumberOfScans = (int)Math.Round(numericUpDown_NumberOfScans.Value);
                 UpdateUI();
             }
             catch (Exception ex)
@@ -1661,12 +1614,14 @@ namespace ShearBoxController_InspectXContinuousScan
                     box_InspectXConnection.Text = "Connected";
                     panel_CTProfile.Enabled = true;
                     panel_ProjectSettings.Enabled = true;
+                    panel_TimerSettings.Enabled = true;
                     break;
                 case Channels.EConnectionState.NoServer:
                     box_InspectXConnection.BackColor = Color.Gray;
                     box_InspectXConnection.Text = "No Server";
                     panel_CTProfile.Enabled = false;
                     panel_ProjectSettings.Enabled = false;
+                    panel_TimerSettings.Enabled = false;
                     btn_Start.Enabled = false;
                     break;
                 case Channels.EConnectionState.Error:
@@ -1674,40 +1629,13 @@ namespace ShearBoxController_InspectXContinuousScan
                     box_InspectXConnection.Text = "Connection Error";
                     panel_CTProfile.Enabled = false;
                     panel_ProjectSettings.Enabled = false;
+                    panel_TimerSettings.Enabled = false;
                     btn_Start.Enabled = false;
                     break;
             }
         }
 
-        /// <summary>
-        /// Format Connection status
-        /// </summary>
-        private void FormatUSBConnectionStatus()
-        {
-            switch (mUSBConnectionState)
-            {
-                case FTDIdevice.EUSBStatus.Connected:
-                    box_USBConnection.BackColor = Color.Green;
-                    box_USBConnection.Text = "Connected";
-                    panel_CTProfile.Enabled = true;
-                    panel_ProjectSettings.Enabled = true;
-                    break;
-                case FTDIdevice.EUSBStatus.Disconnected:
-                    box_USBConnection.BackColor = Color.Gray;
-                    box_USBConnection.Text = "Disconnected";
-                    panel_CTProfile.Enabled = false;
-                    panel_ProjectSettings.Enabled = false;
-                    btn_Start.Enabled = false;
-                    break;
-                case FTDIdevice.EUSBStatus.Error:
-                    box_USBConnection.BackColor = Color.Red;
-                    box_USBConnection.Text = "Connection Error";
-                    panel_CTProfile.Enabled = false;
-                    panel_ProjectSettings.Enabled = false;
-                    btn_Start.Enabled = false;
-                    break;
-            }
-        }
+
 
         /// <summary>
         /// Format Application Status
@@ -1721,7 +1649,7 @@ namespace ShearBoxController_InspectXContinuousScan
                     box_ApplicationState.Text = "Ready";
                     panel_InspectXConnection.Enabled = true;
                     panel_CTProfile.Enabled = true;
-                    panel_USBConnection.Enabled = true;
+                    panel_TimerSettings.Enabled = true;
                     panel_ProjectSettings.Enabled = true;
                     btn_Start.Enabled = true;
                     btn_Start.Visible = true;
@@ -1733,7 +1661,7 @@ namespace ShearBoxController_InspectXContinuousScan
                     box_ApplicationState.Text = "Running";
                     panel_InspectXConnection.Enabled = false;
                     panel_CTProfile.Enabled = false;
-                    panel_USBConnection.Enabled = false;
+                    panel_TimerSettings.Enabled = false;
                     panel_ProjectSettings.Enabled = false;
                     btn_Start.Enabled = false;
                     btn_Start.Visible = false;
@@ -1745,7 +1673,7 @@ namespace ShearBoxController_InspectXContinuousScan
                     box_ApplicationState.Text = "Not Set Up";
                     panel_InspectXConnection.Enabled = true;
                     panel_CTProfile.Enabled = true;
-                    panel_USBConnection.Enabled = true;
+                    panel_TimerSettings.Enabled = true;
                     panel_ProjectSettings.Enabled = true;
                     btn_Start.Enabled = false;
                     btn_Start.Visible = true;
@@ -1757,7 +1685,7 @@ namespace ShearBoxController_InspectXContinuousScan
                     box_ApplicationState.Text = "No Connection";
                     panel_InspectXConnection.Enabled = true;
                     panel_CTProfile.Enabled = false;
-                    panel_USBConnection.Enabled = true;
+                    panel_TimerSettings.Enabled = false;
                     panel_ProjectSettings.Enabled = false;
                     btn_Start.Enabled = false;
                     btn_Start.Visible = true;
@@ -1769,7 +1697,7 @@ namespace ShearBoxController_InspectXContinuousScan
                     box_ApplicationState.Text = "Application Error";
                     panel_InspectXConnection.Enabled = true;
                     panel_CTProfile.Enabled = false;
-                    panel_USBConnection.Enabled = true;
+                    panel_TimerSettings.Enabled = false;
                     panel_ProjectSettings.Enabled = false;
                     btn_Start.Enabled = false;
                     btn_Start.Visible = true;
@@ -1842,10 +1770,6 @@ namespace ShearBoxController_InspectXContinuousScan
                         box_CurrentRunningState.BackColor = Color.Blue;
                         box_CurrentRunningState.Text = "CT Scan";
                         break;
-                    case ERunningState.ShearBox:
-                        box_CurrentRunningState.BackColor = Color.Blue;
-                        box_CurrentRunningState.Text = "Shear box";
-                        break;
                     case ERunningState.Error:
                         box_CurrentRunningState.BackColor = Color.Red;
                         box_CurrentRunningState.Text = "Red";
@@ -1864,38 +1788,36 @@ namespace ShearBoxController_InspectXContinuousScan
         }
 
         /// <summary>
-        /// Format Shearbox Status
+        /// Format Timer status
         /// </summary>
-        private void FormatShearboxStatus()
+        private void FormatTimerStatus()
         {
-            if (mApplicationState == EApplicationState.Running)
+            if (mInspectXConnectionState == Channels.EConnectionState.Connected)
             {
-                switch (mShearBoxState)
+                switch (mTimerState)
                 {
-                    case EShearBoxState.Idle:
-                        box_CurrentShearBoxState.BackColor = Color.Green;
-                        box_CurrentShearBoxState.Text = "Idle";
+                    case ETimerState.Idle:
+                        box_TimerState.BackColor = Color.Green;
+                        box_TimerState.Text = "Idle";
+                        panel_CTProfile.Enabled = true;
+                        panel_ProjectSettings.Enabled = true;
                         break;
-                    case EShearBoxState.InMotion:
-                        box_CurrentShearBoxState.BackColor = Color.Blue;
-                        box_CurrentShearBoxState.Text = "In motion";
-                        break;
-                    case EShearBoxState.Error:
-                        box_CurrentShearBoxState.BackColor = Color.Red;
-                        box_CurrentShearBoxState.Text = "Error";
-                        break;
-                    default:
-                        box_CurrentShearBoxState.BackColor = SystemColors.Control;
-                        box_CurrentShearBoxState.Text = "";
+                    case ETimerState.Running:
+                        box_TimerState.BackColor = Color.Blue;
+                        box_TimerState.Text = "Running";
+                        panel_CTProfile.Enabled = false;
+                        panel_ProjectSettings.Enabled = false;
+                        btn_Start.Enabled = false;
                         break;
                 }
             }
             else
             {
-                box_CurrentShearBoxState.BackColor = SystemColors.Control;
-                box_CurrentShearBoxState.Text = "";
+                box_TimerState.BackColor = SystemColors.Control;
+                box_TimerState.Text = "";
             }
         }
+
 
         #endregion Panel - System Status
 
@@ -2243,7 +2165,7 @@ namespace ShearBoxController_InspectXContinuousScan
             CreateDirectory();
 
             // Reset number of shears completed
-            mShearCyclesCompleted = 0;
+            mScansCompleted = 0;
 
             // Check homing
             if (!mChannels.Manipulator.Axis.Homed(IpcContract.Manipulator.EAxisName.All))
@@ -2259,47 +2181,52 @@ namespace ShearBoxController_InspectXContinuousScan
                     Thread.Sleep(100);
             }
 
-            // Run Circular XCT Scan
+            // Update shading corrections
+            DisplayLog("Updating shading corrections...");
+            //Debug.Print(DateTime.Now.ToString("dd/MM/yyyy H:mm:ss.fff") + " : " + "Current Position=" +
+            //        mChannels.Manipulator.Axis.Position(IpcContract.Manipulator.EAxisName.X) + " " +
+            //        mChannels.Manipulator.Axis.Position(IpcContract.Manipulator.EAxisName.Y) + " " +
+            //        mChannels.Manipulator.Axis.Position(IpcContract.Manipulator.EAxisName.Z) + " " +
+            //        mChannels.Manipulator.Axis.Position(IpcContract.Manipulator.EAxisName.Rotate) + " " +
+            //        mChannels.Manipulator.Axis.Position(IpcContract.Manipulator.EAxisName.Tilt) + " " +
+            //        mChannels.Manipulator.Axis.Position(IpcContract.Manipulator.EAxisName.Detector));
+
+            Application.DoEvents();
+
+            // Acquire shading correction
+            mInspectXState = EInspectXState.AcquireShadingCorrection;
+            mShadingCorrectionCompleted = false;
+            UpdateUI();
+            Inspect_X_Definitions.ShadingCorrectionResponse scResponse = mChannels.CT3DScan.UpdateShadingCorrection(mCTProfile);
+            // Wait until shading corrections finish
+            while (!mShadingCorrectionCompleted && !backgroundWorker_MainRoutine.CancellationPending)
+                Thread.Sleep(100);
             if (!backgroundWorker_MainRoutine.CancellationPending)
-                XCTScan(mProjectName + "_" + mShearCyclesCompleted.ToString("000"));
+                DisplayLog("Shading corrections updated");
 
-            if (mNumberOfShearCycles > 0 && !backgroundWorker_MainRoutine.CancellationPending)
-            {
+            // Start first XCT scan and start timers
+            StartXCTScan();
+            StartTimers();
 
-                // Set number of shears to zero
-                mShearCyclesCompleted = 0;
-
-                // Update shearbox state
-                mShearBoxState = EShearBoxState.InMotion;
-                mRunningState = ERunningState.ShearBox;
-                UpdateUI();
-                // Send signal to shear box
-                SendSignal(mFtdiDevice);
-
-                // Clear buffer
-                mUSBConnectionState = mFtdiDevice.PurgeBuffer();
-                mUSBConnectionState = mFtdiDevice.PauseCommunications();
-                UpdateUI();
-                // Last button state reset
-                mFtdiDevice.lastButtonState = false;
-                // Restart communications
-                mUSBConnectionState = mFtdiDevice.RestartCommunications();
-                UpdateUI();
-                // Cycle and wait for signal. 
-                while (mShearCyclesCompleted < mNumberOfShearCycles
-                    && mUSBConnectionState == FTDIdevice.EUSBStatus.Connected
-                    && !backgroundWorker_MainRoutine.CancellationPending)
-                {
-                    DisplayLog("Waiting for signal");
-                    mFtdiDevice.UARTProcessRxSignal();
-                }
-            }
+            //
+            // Can simply wait whilst scans are triggered by timer
+            //
+            while (!backgroundWorker_MainRoutine.CancellationPending && mScansCompleted < mNumberOfScans)
+                Thread.Sleep(250);
 
             // Check if cancelled by user
             if (backgroundWorker_MainRoutine.CancellationPending)
+            {
+                // Ensure that processes have been terminated correctly
+                while (mStop)
+                    Thread.Sleep(200);
                 DisplayLog("Program aborted by user");
+            }
             else
-                DisplayLog(mShearCyclesCompleted.ToString() + " shear cycles completed successfully");
+                DisplayLog(mScansCompleted.ToString() + " scans completed successfully");
+
+            // Stop timers
+            StopTimers();
 
             // Create complete log file
             WriteOutputFile(@"output.log", mOutputLogText);
@@ -2342,9 +2269,16 @@ namespace ShearBoxController_InspectXContinuousScan
                     while (!mScanAbortedSuccessfully)
                         Thread.Sleep(100);
                 }
+
+                if (mTimerState == ETimerState.Running)
+                {
+                    // Stop Timers
+                    StopTimers();
+                }
+
                 // Wait for things to settle down
                 Thread.Sleep(5000);
-               
+
             }
         }
 
@@ -2377,177 +2311,6 @@ namespace ShearBoxController_InspectXContinuousScan
 
         #endregion Main Routine
 
-        #region ShearBox
-
-        #region UI functions
-
-
-        /// <summary>
-        /// Disconnect USB device
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void btn_USBDisconnect_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                if (mUSBConnectionState == FTDIdevice.EUSBStatus.Connected)
-                    mUSBConnectionState = mFtdiDevice.CloseDevice();
-                UpdateUI();
-            }
-            catch (Exception ex) { AppLog.LogException(ex); }
-        }
-
-        /// <summary>
-        /// Connect USB device
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void btn_USBConnect_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                InitialiseUSB();
-                UpdateUI();
-            }
-            catch (Exception ex) { AppLog.LogException(ex); }
-        }
-
-
-        #endregion UI functions
-
-        #region Special USB functions
-        /// <summary>
-        /// String of functions that initialises the USB
-        /// </summary>
-        private void InitialiseUSB()
-        {
-            DisplayLog("Connecting USB device...");
-
-            // FTDI device in bitbang mode
-            mFtdiDevice = new FTDIdevice_bitbang(this);
-
-            // Subscribe to appropriate events
-            mFtdiDevice.RisingEdgeSignal += new RisingEdgeSignalEventHandler(RisingSignalRecieved);
-
-            // Open device
-            mUSBConnectionState = mFtdiDevice.OpenDevice();
-            UpdateUI();
-
-            // Enable bit bang
-            mUSBConnectionState = mFtdiDevice.EnableBitBang();
-            UpdateUI();
-
-            // Set characteristics
-            mUSBConnectionState = mFtdiDevice.SetUpDeviceParameters();
-            UpdateUI();
-
-            // Pause read communications
-            mUSBConnectionState = mFtdiDevice.PauseCommunications();
-            UpdateUI();
-
-            // Purge communications
-            mUSBConnectionState = mFtdiDevice.PurgeBuffer();
-            UpdateUI();
-
-            // Check that connection was successful
-            if (mUSBConnectionState == FTDIdevice.EUSBStatus.Connected)
-                DisplayLog("USB Device successfully connected");
-        }
-
-        /// <summary>
-        /// Function called when a rising signal is recieved
-        /// </summary>
-        /// <param name="source"></param>
-        /// <param name="e"></param>
-        private void RisingSignalRecieved(object source, EventArgs e)
-        {
-            // Cast the FTDI from the source
-            FTDIdevice ftdiDevice = (FTDIdevice)source;
-            // Pause communications
-            mUSBConnectionState = ftdiDevice.PauseCommunications();
-            UpdateUI();
-            // Clear the buffer
-            mUSBConnectionState = ftdiDevice.PurgeBuffer();
-            UpdateUI();
-
-            DisplayLog("Signal Recieved");
-            // Update Shearbox state
-            mShearBoxState = EShearBoxState.Idle;
-            mRunningState = ERunningState.Idle;
-            UpdateUI();
-
-            // When signal recieved that shear completed then increase counter
-            ++mShearCyclesCompleted;
-
-            // Run Circular XCT Scan (after checking that program has not been cancelled)
-            if (!backgroundWorker_MainRoutine.CancellationPending)
-                XCTScan(mProjectName + "_" + mShearCyclesCompleted.ToString("000"));
-
-            if (mShearCyclesCompleted < mNumberOfShearCycles && !backgroundWorker_MainRoutine.CancellationPending)
-            {
-
-                // Update Shearbox state
-                mRunningState = ERunningState.ShearBox;
-                mShearBoxState = EShearBoxState.InMotion;
-                UpdateUI();
-                // Send signal to shear box
-                SendSignal(ftdiDevice);
-                // Pause communications
-                mUSBConnectionState = ftdiDevice.PauseCommunications();
-                UpdateUI();
-                // Clear the buffer
-                mUSBConnectionState = ftdiDevice.PurgeBuffer();
-                // Restart communications
-                mUSBConnectionState = ftdiDevice.RestartCommunications();
-                UpdateUI();
-            }
-        }
-
-        /// <summary>
-        /// Send a signal to the USB device
-        /// </summary>
-        /// <param name="ftdiDevice"> FTDI device object </param>
-        private void SendSignal(FTDIdevice ftdiDevice)
-        {
-            DisplayLog("Sending Signal");
-
-            // high signal
-            mUSBConnectionState = ftdiDevice.Write(0x01);
-            UpdateUI();
-
-            // wait
-            Thread.Sleep(500);
-
-            // low signal
-            mUSBConnectionState = ftdiDevice.Write(0x00);
-            UpdateUI();
-
-            // wait (3 seconds)
-            Thread.Sleep(3000);
-
-            DisplayLog("Signal Sent. Waiting for response from shearbox...");
-        }
-        #endregion Special USB functions
-
-        /// <summary>
-        /// Additional calls for form closing to ensure that USB is closed properly. 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void UserForm_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            try
-            {
-                if (mUSBConnectionState == FTDIdevice.EUSBStatus.Connected)
-                    mFtdiDevice.CloseDevice();
-                UpdateUI();
-            }
-            catch (Exception ex) { AppLog.LogException(ex); }
-        }
-
-        #endregion ShearBox
-
         private void backgroundWorker_Abort_DoWork(object sender, DoWorkEventArgs e)
         {
             try
@@ -2569,6 +2332,122 @@ namespace ShearBoxController_InspectXContinuousScan
             UpdateUI();
         }
 
+        /// <summary>
+        /// General time elapsed timer for refreshing display
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void timer_General_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                if (this.InvokeRequired)
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        box_TimerState.Text = TimingWatch.Elapsed.ToString();
+                    });
+                else
+                {
+                    box_TimerState.Text = TimingWatch.Elapsed.ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLog.LogException(ex);
+                mApplicationState = EApplicationState.Error;
+            }
+        }
+
+        /// <summary>
+        /// Start timers
+        /// </summary>
+        private void StartTimers()
+        {
+            // Set CT Scan timer elapse interval
+            timer_CTScanInterval.Interval = mTimerInterval * 1000;
+            // Set Timer state
+            mTimerState = ETimerState.Running;
+            // Start timers
+            if (this.InvokeRequired)
+                this.Invoke((MethodInvoker)delegate
+                {
+                    timer_General.Start();
+                    timer_CTScanInterval.Start();
+                    TimingWatch = Stopwatch.StartNew();
+                });
+            else
+            {
+                timer_General.Start();
+                timer_CTScanInterval.Start();
+                TimingWatch = Stopwatch.StartNew();
+            }
+            // Update UI
+            UpdateUI();
+
+            return;
+        }
+
+        private void StopTimers()
+        {
+            // Set Timer state
+            mTimerState = ETimerState.Idle;
+
+
+            // Stop timers
+            if (this.InvokeRequired)
+                this.Invoke((MethodInvoker)delegate
+                {
+                    timer_General.Stop();
+                    timer_CTScanInterval.Stop();
+                    TimingWatch.Stop();
+                });
+            else
+            {
+                timer_General.Stop();
+                timer_CTScanInterval.Stop();
+                TimingWatch.Stop();
+                TimingWatch.Reset();
+            }
+            // Update UI
+            UpdateUI();
+
+            return;
+        }
+
+        private void backgroundWorker_XCTScan_DoWork(object sender, DoWorkEventArgs e)
+        {
+            // Run Circular XCT Scan
+            if (!backgroundWorker_MainRoutine.CancellationPending)
+                XCTScan(mProjectName + "_" + mScansCompleted.ToString("000"));
+        }
+
+        private void backgroundWorker_XCTScan_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            // Increment number of scans completed. Note that if aborted, this doesn't actually matter. 
+            ++mScansCompleted;
+            // Update form text
+            if (this.InvokeRequired)
+                this.Invoke((MethodInvoker)delegate
+                {
+                    box_CompletedScans.Text = mScansCompleted.ToString();
+                });
+            else
+            {
+                box_CompletedScans.Text = mScansCompleted.ToString();
+            }
+        }
+
+        private void StartXCTScan()
+        {
+            backgroundWorker_XCTScan.RunWorkerAsync();
+        }
+
+        private void timer_CTScanInterval_Tick(object sender, EventArgs e)
+        {
+            DisplayLog("Timer tick");
+            if (!backgroundWorker_XCTScan.IsBusy)
+                StartXCTScan();
+        }
 
 
 

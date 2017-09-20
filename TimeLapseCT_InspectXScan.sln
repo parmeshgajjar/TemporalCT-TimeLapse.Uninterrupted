@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShearBoxController_InspectXContinuousScan", "ShearBoxController_InspectXContinuousScan\ShearBoxController_InspectXContinuousScan.csproj", "{125AB111-10FA-4BEE-9F53-5A72F4D8019D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeLapseCT_InspectXScan", "TimeLapseCT_InspectXScan\TimeLapseCT_InspectXScan.csproj", "{125AB111-10FA-4BEE-9F53-5A72F4D8019D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{07B3CC40-185D-447B-8828-440AFC913D83} = {07B3CC40-185D-447B-8828-440AFC913D83}
 		{54760C5F-B1CD-48DA-B76D-791BD3531CE1} = {54760C5F-B1CD-48DA-B76D-791BD3531CE1}

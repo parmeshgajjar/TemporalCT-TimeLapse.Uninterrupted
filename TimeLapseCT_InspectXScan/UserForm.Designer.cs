@@ -1,6 +1,6 @@
 ﻿namespace ShearBoxController_InspectXContinuousScan
 {
-	partial class ShearBoxController_FlyScanForm
+	partial class TimeLapse_FlyScanForm
 	{
 		/// <summary>
 		/// Required designer variable.
@@ -28,6 +28,7 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+            this.components = new System.ComponentModel.Container();
             this.btn_Start = new System.Windows.Forms.Button();
             this.btn_Stop = new System.Windows.Forms.Button();
             this.panel_CTProfile = new System.Windows.Forms.Panel();
@@ -41,18 +42,18 @@
             this.btn_CTConnect = new System.Windows.Forms.Button();
             this.label_InspectXConnectionPanel = new System.Windows.Forms.Label();
             this.panel_SystemStatus = new System.Windows.Forms.Panel();
-            this.panel_CurrentShearBoxState = new System.Windows.Forms.Panel();
-            this.box_CurrentShearBoxState = new System.Windows.Forms.Label();
-            this.label_CurrentShearBoxState = new System.Windows.Forms.Label();
+            this.panel_NoCompletedScans = new System.Windows.Forms.Panel();
+            this.box_CompletedScans = new System.Windows.Forms.Label();
+            this.label_CompletedCTScans = new System.Windows.Forms.Label();
             this.panel_CurrentInspectXStatus = new System.Windows.Forms.Panel();
             this.box_CurrentInspectXState = new System.Windows.Forms.Label();
             this.label_CurrentInspectXState = new System.Windows.Forms.Label();
             this.panel_CurrentRunningStatus = new System.Windows.Forms.Panel();
             this.box_CurrentRunningState = new System.Windows.Forms.Label();
             this.label_CurrentRunningState = new System.Windows.Forms.Label();
-            this.panel_USBConnectionStatus = new System.Windows.Forms.Panel();
-            this.box_USBConnection = new System.Windows.Forms.Label();
-            this.label_USBConnection = new System.Windows.Forms.Label();
+            this.panel_TimerStatus = new System.Windows.Forms.Panel();
+            this.box_TimerState = new System.Windows.Forms.Label();
+            this.label_TimerValue = new System.Windows.Forms.Label();
             this.panel_InspectXConnectionStatus = new System.Windows.Forms.Panel();
             this.box_InspectXConnection = new System.Windows.Forms.Label();
             this.label_InspectXConnection = new System.Windows.Forms.Label();
@@ -63,15 +64,18 @@
             this.panel_OutputLog = new System.Windows.Forms.Panel();
             this.textBoxLog = new System.Windows.Forms.TextBox();
             this.label_OutputLog = new System.Windows.Forms.Label();
-            this.panel_USBConnection = new System.Windows.Forms.Panel();
-            this.btn_USBConnect = new System.Windows.Forms.Button();
-            this.label_USBConnectionPanel = new System.Windows.Forms.Label();
-            this.btn_USBDisconnect = new System.Windows.Forms.Button();
+            this.panel_TimerSettings = new System.Windows.Forms.Panel();
+            this.label2 = new System.Windows.Forms.Label();
+            this.numericUpDown_minutes = new System.Windows.Forms.NumericUpDown();
+            this.label_hours = new System.Windows.Forms.Label();
+            this.numericUpDown_hours = new System.Windows.Forms.NumericUpDown();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label_TimerPanel = new System.Windows.Forms.Label();
             this.panel_ProjectSettings = new System.Windows.Forms.Panel();
             this.checkBox_ManualReturnManipulatorToZero = new System.Windows.Forms.CheckBox();
             this.label_ManualReturnManipulatorToZero = new System.Windows.Forms.Label();
-            this.numericUpDown_NumberOfShearCycles = new System.Windows.Forms.NumericUpDown();
-            this.label_ShearCycles = new System.Windows.Forms.Label();
+            this.numericUpDown_NumberOfScans = new System.Windows.Forms.NumericUpDown();
+            this.label_NoScans = new System.Windows.Forms.Label();
             this.button_BrowseDirectory = new System.Windows.Forms.Button();
             this.textBox_RootDirectory = new System.Windows.Forms.TextBox();
             this.label_ProjectFolder = new System.Windows.Forms.Label();
@@ -81,19 +85,24 @@
             this.openFileDialogCTProfile = new System.Windows.Forms.OpenFileDialog();
             this.backgroundWorker_MainRoutine = new System.ComponentModel.BackgroundWorker();
             this.backgroundWorker_Abort = new System.ComponentModel.BackgroundWorker();
+            this.timer_CTScanInterval = new System.Windows.Forms.Timer(this.components);
+            this.timer_General = new System.Windows.Forms.Timer(this.components);
+            this.backgroundWorker_XCTScan = new System.ComponentModel.BackgroundWorker();
             this.panel_CTProfile.SuspendLayout();
             this.panel_InspectXConnection.SuspendLayout();
             this.panel_SystemStatus.SuspendLayout();
-            this.panel_CurrentShearBoxState.SuspendLayout();
+            this.panel_NoCompletedScans.SuspendLayout();
             this.panel_CurrentInspectXStatus.SuspendLayout();
             this.panel_CurrentRunningStatus.SuspendLayout();
-            this.panel_USBConnectionStatus.SuspendLayout();
+            this.panel_TimerStatus.SuspendLayout();
             this.panel_InspectXConnectionStatus.SuspendLayout();
             this.panel_SystemState.SuspendLayout();
             this.panel_OutputLog.SuspendLayout();
-            this.panel_USBConnection.SuspendLayout();
+            this.panel_TimerSettings.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_minutes)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_hours)).BeginInit();
             this.panel_ProjectSettings.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_NumberOfShearCycles)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_NumberOfScans)).BeginInit();
             this.SuspendLayout();
             // 
             // btn_Start
@@ -127,7 +136,7 @@
             this.panel_CTProfile.Controls.Add(this.textBox_Profile);
             this.panel_CTProfile.Controls.Add(this.btn_Refresh);
             this.panel_CTProfile.Controls.Add(this.comboBoxProfile);
-            this.panel_CTProfile.Location = new System.Drawing.Point(12, 247);
+            this.panel_CTProfile.Location = new System.Drawing.Point(12, 186);
             this.panel_CTProfile.Name = "panel_CTProfile";
             this.panel_CTProfile.Size = new System.Drawing.Size(471, 91);
             this.panel_CTProfile.TabIndex = 2;
@@ -226,10 +235,10 @@
             // 
             // panel_SystemStatus
             // 
-            this.panel_SystemStatus.Controls.Add(this.panel_CurrentShearBoxState);
+            this.panel_SystemStatus.Controls.Add(this.panel_NoCompletedScans);
             this.panel_SystemStatus.Controls.Add(this.panel_CurrentInspectXStatus);
             this.panel_SystemStatus.Controls.Add(this.panel_CurrentRunningStatus);
-            this.panel_SystemStatus.Controls.Add(this.panel_USBConnectionStatus);
+            this.panel_SystemStatus.Controls.Add(this.panel_TimerStatus);
             this.panel_SystemStatus.Controls.Add(this.panel_InspectXConnectionStatus);
             this.panel_SystemStatus.Controls.Add(this.panel_SystemState);
             this.panel_SystemStatus.Controls.Add(this.label_SystemStatus);
@@ -238,33 +247,33 @@
             this.panel_SystemStatus.Size = new System.Drawing.Size(471, 132);
             this.panel_SystemStatus.TabIndex = 4;
             // 
-            // panel_CurrentShearBoxState
+            // panel_NoCompletedScans
             // 
-            this.panel_CurrentShearBoxState.Controls.Add(this.box_CurrentShearBoxState);
-            this.panel_CurrentShearBoxState.Controls.Add(this.label_CurrentShearBoxState);
-            this.panel_CurrentShearBoxState.Location = new System.Drawing.Point(326, 78);
-            this.panel_CurrentShearBoxState.Name = "panel_CurrentShearBoxState";
-            this.panel_CurrentShearBoxState.Size = new System.Drawing.Size(142, 47);
-            this.panel_CurrentShearBoxState.TabIndex = 3;
+            this.panel_NoCompletedScans.Controls.Add(this.box_CompletedScans);
+            this.panel_NoCompletedScans.Controls.Add(this.label_CompletedCTScans);
+            this.panel_NoCompletedScans.Location = new System.Drawing.Point(326, 78);
+            this.panel_NoCompletedScans.Name = "panel_NoCompletedScans";
+            this.panel_NoCompletedScans.Size = new System.Drawing.Size(142, 47);
+            this.panel_NoCompletedScans.TabIndex = 3;
             // 
-            // box_CurrentShearBoxState
+            // box_CompletedScans
             // 
-            this.box_CurrentShearBoxState.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.box_CurrentShearBoxState.ForeColor = System.Drawing.Color.White;
-            this.box_CurrentShearBoxState.Location = new System.Drawing.Point(3, 22);
-            this.box_CurrentShearBoxState.Name = "box_CurrentShearBoxState";
-            this.box_CurrentShearBoxState.Size = new System.Drawing.Size(135, 19);
-            this.box_CurrentShearBoxState.TabIndex = 1;
-            this.box_CurrentShearBoxState.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.box_CompletedScans.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.box_CompletedScans.ForeColor = System.Drawing.Color.Black;
+            this.box_CompletedScans.Location = new System.Drawing.Point(3, 22);
+            this.box_CompletedScans.Name = "box_CompletedScans";
+            this.box_CompletedScans.Size = new System.Drawing.Size(135, 19);
+            this.box_CompletedScans.TabIndex = 1;
+            this.box_CompletedScans.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // label_CurrentShearBoxState
+            // label_CompletedCTScans
             // 
-            this.label_CurrentShearBoxState.Location = new System.Drawing.Point(3, 5);
-            this.label_CurrentShearBoxState.Name = "label_CurrentShearBoxState";
-            this.label_CurrentShearBoxState.Size = new System.Drawing.Size(135, 23);
-            this.label_CurrentShearBoxState.TabIndex = 0;
-            this.label_CurrentShearBoxState.Text = "Current Shearbox State";
-            this.label_CurrentShearBoxState.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.label_CompletedCTScans.Location = new System.Drawing.Point(3, 5);
+            this.label_CompletedCTScans.Name = "label_CompletedCTScans";
+            this.label_CompletedCTScans.Size = new System.Drawing.Size(135, 23);
+            this.label_CompletedCTScans.TabIndex = 0;
+            this.label_CompletedCTScans.Text = "Completed CT scans";
+            this.label_CompletedCTScans.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // panel_CurrentInspectXStatus
             // 
@@ -322,33 +331,33 @@
             this.label_CurrentRunningState.Text = "Current Running State";
             this.label_CurrentRunningState.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
-            // panel_USBConnectionStatus
+            // panel_TimerStatus
             // 
-            this.panel_USBConnectionStatus.Controls.Add(this.box_USBConnection);
-            this.panel_USBConnectionStatus.Controls.Add(this.label_USBConnection);
-            this.panel_USBConnectionStatus.Location = new System.Drawing.Point(326, 25);
-            this.panel_USBConnectionStatus.Name = "panel_USBConnectionStatus";
-            this.panel_USBConnectionStatus.Size = new System.Drawing.Size(142, 47);
-            this.panel_USBConnectionStatus.TabIndex = 2;
+            this.panel_TimerStatus.Controls.Add(this.box_TimerState);
+            this.panel_TimerStatus.Controls.Add(this.label_TimerValue);
+            this.panel_TimerStatus.Location = new System.Drawing.Point(326, 25);
+            this.panel_TimerStatus.Name = "panel_TimerStatus";
+            this.panel_TimerStatus.Size = new System.Drawing.Size(142, 47);
+            this.panel_TimerStatus.TabIndex = 2;
             // 
-            // box_USBConnection
+            // box_TimerState
             // 
-            this.box_USBConnection.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.box_USBConnection.ForeColor = System.Drawing.Color.White;
-            this.box_USBConnection.Location = new System.Drawing.Point(3, 22);
-            this.box_USBConnection.Name = "box_USBConnection";
-            this.box_USBConnection.Size = new System.Drawing.Size(135, 19);
-            this.box_USBConnection.TabIndex = 3;
-            this.box_USBConnection.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.box_TimerState.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.box_TimerState.ForeColor = System.Drawing.Color.White;
+            this.box_TimerState.Location = new System.Drawing.Point(3, 22);
+            this.box_TimerState.Name = "box_TimerState";
+            this.box_TimerState.Size = new System.Drawing.Size(135, 19);
+            this.box_TimerState.TabIndex = 3;
+            this.box_TimerState.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // label_USBConnection
+            // label_TimerValue
             // 
-            this.label_USBConnection.Location = new System.Drawing.Point(3, 5);
-            this.label_USBConnection.Name = "label_USBConnection";
-            this.label_USBConnection.Size = new System.Drawing.Size(135, 23);
-            this.label_USBConnection.TabIndex = 0;
-            this.label_USBConnection.Text = "USB Connection";
-            this.label_USBConnection.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.label_TimerValue.Location = new System.Drawing.Point(3, 5);
+            this.label_TimerValue.Name = "label_TimerValue";
+            this.label_TimerValue.Size = new System.Drawing.Size(135, 23);
+            this.label_TimerValue.TabIndex = 0;
+            this.label_TimerValue.Text = "Timer State";
+            this.label_TimerValue.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // panel_InspectXConnectionStatus
             // 
@@ -448,60 +457,101 @@
             this.label_OutputLog.TabIndex = 0;
             this.label_OutputLog.Text = "Output Log";
             // 
-            // panel_USBConnection
+            // panel_TimerSettings
             // 
-            this.panel_USBConnection.Controls.Add(this.btn_USBConnect);
-            this.panel_USBConnection.Controls.Add(this.label_USBConnectionPanel);
-            this.panel_USBConnection.Controls.Add(this.btn_USBDisconnect);
-            this.panel_USBConnection.Location = new System.Drawing.Point(12, 73);
-            this.panel_USBConnection.Name = "panel_USBConnection";
-            this.panel_USBConnection.Size = new System.Drawing.Size(471, 55);
-            this.panel_USBConnection.TabIndex = 6;
+            this.panel_TimerSettings.Controls.Add(this.label2);
+            this.panel_TimerSettings.Controls.Add(this.numericUpDown_minutes);
+            this.panel_TimerSettings.Controls.Add(this.label_hours);
+            this.panel_TimerSettings.Controls.Add(this.numericUpDown_hours);
+            this.panel_TimerSettings.Controls.Add(this.label1);
+            this.panel_TimerSettings.Controls.Add(this.label_TimerPanel);
+            this.panel_TimerSettings.Location = new System.Drawing.Point(12, 283);
+            this.panel_TimerSettings.Name = "panel_TimerSettings";
+            this.panel_TimerSettings.Size = new System.Drawing.Size(471, 55);
+            this.panel_TimerSettings.TabIndex = 6;
             // 
-            // btn_USBConnect
+            // label2
             // 
-            this.btn_USBConnect.Location = new System.Drawing.Point(14, 25);
-            this.btn_USBConnect.Name = "btn_USBConnect";
-            this.btn_USBConnect.Size = new System.Drawing.Size(217, 25);
-            this.btn_USBConnect.TabIndex = 3;
-            this.btn_USBConnect.Text = "Connect";
-            this.btn_USBConnect.UseVisualStyleBackColor = true;
-            this.btn_USBConnect.Click += new System.EventHandler(this.btn_USBConnect_Click);
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(345, 31);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(43, 13);
+            this.label2.TabIndex = 5;
+            this.label2.Text = "minutes";
             // 
-            // label_USBConnectionPanel
+            // numericUpDown_minutes
             // 
-            this.label_USBConnectionPanel.AutoSize = true;
-            this.label_USBConnectionPanel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label_USBConnectionPanel.ForeColor = System.Drawing.SystemColors.HotTrack;
-            this.label_USBConnectionPanel.Location = new System.Drawing.Point(11, 4);
-            this.label_USBConnectionPanel.Name = "label_USBConnectionPanel";
-            this.label_USBConnectionPanel.Size = new System.Drawing.Size(133, 18);
-            this.label_USBConnectionPanel.TabIndex = 0;
-            this.label_USBConnectionPanel.Text = "USB Connection";
+            this.numericUpDown_minutes.Location = new System.Drawing.Point(276, 29);
+            this.numericUpDown_minutes.Maximum = new decimal(new int[] {
+            59,
+            0,
+            0,
+            0});
+            this.numericUpDown_minutes.Name = "numericUpDown_minutes";
+            this.numericUpDown_minutes.Size = new System.Drawing.Size(63, 20);
+            this.numericUpDown_minutes.TabIndex = 4;
+            this.numericUpDown_minutes.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.numericUpDown_minutes.Value = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
             // 
-            // btn_USBDisconnect
+            // label_hours
             // 
-            this.btn_USBDisconnect.Location = new System.Drawing.Point(251, 25);
-            this.btn_USBDisconnect.Name = "btn_USBDisconnect";
-            this.btn_USBDisconnect.Size = new System.Drawing.Size(217, 25);
-            this.btn_USBDisconnect.TabIndex = 4;
-            this.btn_USBDisconnect.Text = "Disconnect";
-            this.btn_USBDisconnect.UseVisualStyleBackColor = true;
-            this.btn_USBDisconnect.Click += new System.EventHandler(this.btn_USBDisconnect_Click);
+            this.label_hours.AutoSize = true;
+            this.label_hours.Location = new System.Drawing.Point(237, 31);
+            this.label_hours.Name = "label_hours";
+            this.label_hours.Size = new System.Drawing.Size(33, 13);
+            this.label_hours.TabIndex = 3;
+            this.label_hours.Text = "hours";
+            // 
+            // numericUpDown_hours
+            // 
+            this.numericUpDown_hours.Location = new System.Drawing.Point(168, 29);
+            this.numericUpDown_hours.Maximum = new decimal(new int[] {
+            36,
+            0,
+            0,
+            0});
+            this.numericUpDown_hours.Name = "numericUpDown_hours";
+            this.numericUpDown_hours.Size = new System.Drawing.Size(63, 20);
+            this.numericUpDown_hours.TabIndex = 2;
+            this.numericUpDown_hours.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(14, 31);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(148, 13);
+            this.label1.TabIndex = 1;
+            this.label1.Text = "Time interval for starting scan:";
+            // 
+            // label_TimerPanel
+            // 
+            this.label_TimerPanel.AutoSize = true;
+            this.label_TimerPanel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label_TimerPanel.ForeColor = System.Drawing.SystemColors.HotTrack;
+            this.label_TimerPanel.Location = new System.Drawing.Point(11, 4);
+            this.label_TimerPanel.Name = "label_TimerPanel";
+            this.label_TimerPanel.Size = new System.Drawing.Size(117, 18);
+            this.label_TimerPanel.TabIndex = 0;
+            this.label_TimerPanel.Text = "Timer Settings";
             // 
             // panel_ProjectSettings
             // 
             this.panel_ProjectSettings.Controls.Add(this.checkBox_ManualReturnManipulatorToZero);
             this.panel_ProjectSettings.Controls.Add(this.label_ManualReturnManipulatorToZero);
-            this.panel_ProjectSettings.Controls.Add(this.numericUpDown_NumberOfShearCycles);
-            this.panel_ProjectSettings.Controls.Add(this.label_ShearCycles);
+            this.panel_ProjectSettings.Controls.Add(this.numericUpDown_NumberOfScans);
+            this.panel_ProjectSettings.Controls.Add(this.label_NoScans);
             this.panel_ProjectSettings.Controls.Add(this.button_BrowseDirectory);
             this.panel_ProjectSettings.Controls.Add(this.textBox_RootDirectory);
             this.panel_ProjectSettings.Controls.Add(this.label_ProjectFolder);
             this.panel_ProjectSettings.Controls.Add(this.textBox_ProjectName);
             this.panel_ProjectSettings.Controls.Add(this.label_ProjectName);
             this.panel_ProjectSettings.Controls.Add(this.label_ProjectSettings);
-            this.panel_ProjectSettings.Location = new System.Drawing.Point(12, 134);
+            this.panel_ProjectSettings.Location = new System.Drawing.Point(12, 73);
             this.panel_ProjectSettings.Name = "panel_ProjectSettings";
             this.panel_ProjectSettings.Size = new System.Drawing.Size(471, 107);
             this.panel_ProjectSettings.TabIndex = 7;
@@ -525,28 +575,28 @@
             this.label_ManualReturnManipulatorToZero.TabIndex = 22;
             this.label_ManualReturnManipulatorToZero.Text = "Manually return manipulator to zero:";
             // 
-            // numericUpDown_NumberOfShearCycles
+            // numericUpDown_NumberOfScans
             // 
-            this.numericUpDown_NumberOfShearCycles.Location = new System.Drawing.Point(94, 83);
-            this.numericUpDown_NumberOfShearCycles.Maximum = new decimal(new int[] {
+            this.numericUpDown_NumberOfScans.Location = new System.Drawing.Point(94, 83);
+            this.numericUpDown_NumberOfScans.Maximum = new decimal(new int[] {
             500,
             0,
             0,
             0});
-            this.numericUpDown_NumberOfShearCycles.Name = "numericUpDown_NumberOfShearCycles";
-            this.numericUpDown_NumberOfShearCycles.Size = new System.Drawing.Size(87, 20);
-            this.numericUpDown_NumberOfShearCycles.TabIndex = 21;
-            this.numericUpDown_NumberOfShearCycles.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.numericUpDown_NumberOfShearCycles.ValueChanged += new System.EventHandler(this.numericUpDown_NumberOfShearCycles_ValueChanged);
+            this.numericUpDown_NumberOfScans.Name = "numericUpDown_NumberOfScans";
+            this.numericUpDown_NumberOfScans.Size = new System.Drawing.Size(87, 20);
+            this.numericUpDown_NumberOfScans.TabIndex = 21;
+            this.numericUpDown_NumberOfScans.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.numericUpDown_NumberOfScans.ValueChanged += new System.EventHandler(this.numericUpDown_NumberOfShearCycles_ValueChanged);
             // 
-            // label_ShearCycles
+            // label_NoScans
             // 
-            this.label_ShearCycles.AutoSize = true;
-            this.label_ShearCycles.Location = new System.Drawing.Point(14, 85);
-            this.label_ShearCycles.Name = "label_ShearCycles";
-            this.label_ShearCycles.Size = new System.Drawing.Size(72, 13);
-            this.label_ShearCycles.TabIndex = 20;
-            this.label_ShearCycles.Text = "Shear Cycles:";
+            this.label_NoScans.AutoSize = true;
+            this.label_NoScans.Location = new System.Drawing.Point(14, 85);
+            this.label_NoScans.Name = "label_NoScans";
+            this.label_NoScans.Size = new System.Drawing.Size(69, 13);
+            this.label_NoScans.TabIndex = 20;
+            this.label_NoScans.Text = "No of Scans:";
             // 
             // button_BrowseDirectory
             // 
@@ -622,41 +672,55 @@
             this.backgroundWorker_Abort.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_Abort_DoWork);
             this.backgroundWorker_Abort.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_Abort_RunWorkerCompleted);
             // 
-            // ShearBoxController_FlyScanForm
+            // timer_CTScanInterval
+            // 
+            this.timer_CTScanInterval.Tick += new System.EventHandler(this.timer_CTScanInterval_Tick);
+            // 
+            // timer_General
+            // 
+            this.timer_General.Tick += new System.EventHandler(this.timer_General_Tick);
+            // 
+            // backgroundWorker_XCTScan
+            // 
+            this.backgroundWorker_XCTScan.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_XCTScan_DoWork);
+            this.backgroundWorker_XCTScan.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_XCTScan_RunWorkerCompleted);
+            // 
+            // TimeLapse_FlyScanForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(969, 426);
             this.Controls.Add(this.panel_ProjectSettings);
-            this.Controls.Add(this.panel_USBConnection);
+            this.Controls.Add(this.panel_TimerSettings);
             this.Controls.Add(this.panel_OutputLog);
             this.Controls.Add(this.panel_SystemStatus);
             this.Controls.Add(this.panel_InspectXConnection);
             this.Controls.Add(this.panel_CTProfile);
             this.Controls.Add(this.btn_Start);
             this.Controls.Add(this.btn_Stop);
-            this.Name = "ShearBoxController_FlyScanForm";
-            this.Text = "Shearbox Controller - Inspect-X Continuous Rotating Scan";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.UserForm_FormClosing);
+            this.Name = "TimeLapse_FlyScanForm";
+            this.Text = "TimeLapse - Inspect-X Continuous Rotating Scan";
             this.panel_CTProfile.ResumeLayout(false);
             this.panel_CTProfile.PerformLayout();
             this.panel_InspectXConnection.ResumeLayout(false);
             this.panel_InspectXConnection.PerformLayout();
             this.panel_SystemStatus.ResumeLayout(false);
             this.panel_SystemStatus.PerformLayout();
-            this.panel_CurrentShearBoxState.ResumeLayout(false);
+            this.panel_NoCompletedScans.ResumeLayout(false);
             this.panel_CurrentInspectXStatus.ResumeLayout(false);
             this.panel_CurrentRunningStatus.ResumeLayout(false);
-            this.panel_USBConnectionStatus.ResumeLayout(false);
+            this.panel_TimerStatus.ResumeLayout(false);
             this.panel_InspectXConnectionStatus.ResumeLayout(false);
             this.panel_SystemState.ResumeLayout(false);
             this.panel_OutputLog.ResumeLayout(false);
             this.panel_OutputLog.PerformLayout();
-            this.panel_USBConnection.ResumeLayout(false);
-            this.panel_USBConnection.PerformLayout();
+            this.panel_TimerSettings.ResumeLayout(false);
+            this.panel_TimerSettings.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_minutes)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_hours)).EndInit();
             this.panel_ProjectSettings.ResumeLayout(false);
             this.panel_ProjectSettings.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_NumberOfShearCycles)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_NumberOfScans)).EndInit();
             this.ResumeLayout(false);
 
 		}
@@ -682,33 +746,29 @@
         private System.Windows.Forms.Button button_BrowseProfile;
         private System.Windows.Forms.Panel panel_SystemState;
         private System.Windows.Forms.Label label_SystemState;
-        private System.Windows.Forms.Panel panel_USBConnection;
-        private System.Windows.Forms.Button btn_USBConnect;
-        private System.Windows.Forms.Label label_USBConnectionPanel;
-        private System.Windows.Forms.Button btn_USBDisconnect;
+        private System.Windows.Forms.Panel panel_TimerSettings;
+        private System.Windows.Forms.Label label_TimerPanel;
         private System.Windows.Forms.Panel panel_ProjectSettings;
-        private System.Windows.Forms.NumericUpDown numericUpDown_NumberOfShearCycles;
-        private System.Windows.Forms.Label label_ShearCycles;
         private System.Windows.Forms.Button button_BrowseDirectory;
         private System.Windows.Forms.TextBox textBox_RootDirectory;
         private System.Windows.Forms.Label label_ProjectFolder;
         private System.Windows.Forms.TextBox textBox_ProjectName;
         private System.Windows.Forms.Label label_ProjectName;
         private System.Windows.Forms.Label label_ProjectSettings;
-        private System.Windows.Forms.Panel panel_USBConnectionStatus;
-        private System.Windows.Forms.Label label_USBConnection;
+        private System.Windows.Forms.Panel panel_TimerStatus;
+        private System.Windows.Forms.Label label_TimerValue;
         private System.Windows.Forms.Panel panel_InspectXConnectionStatus;
         private System.Windows.Forms.Label label_InspectXConnection;
-        private System.Windows.Forms.Panel panel_CurrentShearBoxState;
-        private System.Windows.Forms.Label box_CurrentShearBoxState;
-        private System.Windows.Forms.Label label_CurrentShearBoxState;
+        private System.Windows.Forms.Panel panel_NoCompletedScans;
+        private System.Windows.Forms.Label box_CompletedScans;
+        private System.Windows.Forms.Label label_CompletedCTScans;
         private System.Windows.Forms.Panel panel_CurrentInspectXStatus;
         private System.Windows.Forms.Label box_CurrentInspectXState;
         private System.Windows.Forms.Label label_CurrentInspectXState;
         private System.Windows.Forms.Panel panel_CurrentRunningStatus;
         private System.Windows.Forms.Label box_CurrentRunningState;
         private System.Windows.Forms.Label label_CurrentRunningState;
-        private System.Windows.Forms.Label box_USBConnection;
+        private System.Windows.Forms.Label box_TimerState;
         private System.Windows.Forms.Label box_InspectXConnection;
         private System.Windows.Forms.Label box_ApplicationState;
         public System.Windows.Forms.OpenFileDialog openFileDialogCTProfile;
@@ -716,6 +776,16 @@
         private System.Windows.Forms.CheckBox checkBox_ManualReturnManipulatorToZero;
         private System.Windows.Forms.Label label_ManualReturnManipulatorToZero;
         private System.ComponentModel.BackgroundWorker backgroundWorker_Abort;
+        private System.Windows.Forms.NumericUpDown numericUpDown_NumberOfScans;
+        private System.Windows.Forms.Label label_NoScans;
+        private System.Windows.Forms.NumericUpDown numericUpDown_hours;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.NumericUpDown numericUpDown_minutes;
+        private System.Windows.Forms.Label label_hours;
+        private System.Windows.Forms.Timer timer_CTScanInterval;
+        private System.Windows.Forms.Timer timer_General;
+        private System.ComponentModel.BackgroundWorker backgroundWorker_XCTScan;
 	}
 }
 

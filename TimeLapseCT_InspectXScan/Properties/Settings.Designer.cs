@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace ShearBoxController_InspectXContinuousScan.Properties {
+namespace TimeLapseCT_InspectXScan.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]

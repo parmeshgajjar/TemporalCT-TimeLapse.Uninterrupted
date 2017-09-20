@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace ShearBoxController_InspectXContinuousScan.Properties {
+namespace TimeLapseCT_InspectXScan.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace ShearBoxController_InspectXContinuousScan.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("ShearBoxController_InspectXContinuousScan.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("TimeLapseCT_InspectXScan.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

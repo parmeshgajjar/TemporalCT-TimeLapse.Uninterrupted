@@ -51,7 +51,7 @@ namespace ShearBoxController_InspectXContinuousScan
         /// <summary>
         /// Inspect-X State
         /// </summary>
-        private enum EInspectXState { Idle, AcquireShadingCorrection, CTScanAcquiring, CTScanReconstructing, Error }
+        private enum EInspectXState { Idle, AcquireShadingCorrection, AutoCondition, CTScanAcquiring, CTScanReconstructing, Error }
         private EInspectXState mInspectXState = EInspectXState.Idle;
 
         /// <summary>
@@ -185,7 +185,7 @@ namespace ShearBoxController_InspectXContinuousScan
                     // For the generic IPC client this is all of them!
                     // This just sets flags, it does not actually open the channels.
                     mChannels.AccessApplication = true;
-                    mChannels.AccessXray = false;
+                    mChannels.AccessXray = true;
                     mChannels.AccessManipulator = true;
                     mChannels.AccessImageProcessing = false;
                     mChannels.AccessInspection = false;
@@ -221,6 +221,12 @@ namespace ShearBoxController_InspectXContinuousScan
                                 new EventHandler<CommunicationsChannel_Application.EventArgsInspectXStatus>(EventHandlerInspectXStatus);
                             mChannels.Application.mEventSubscriptionInspectXAlarms.Event +=
                                 new EventHandler<CommunicationsChannel_Application.EventArgsInspectXAlarms>(EventHandlerInspectXAlarms);
+                        }
+
+                        if (mChannels.Xray != null)
+                        {
+                            mChannels.Xray.mEventSubscriptionHeartbeat.Event +=
+                                new EventHandler<CommunicationsChannel_XRay.EventArgsHeartbeat>(EventHandlerHeartbeatXRay);
                         }
 
 
@@ -273,6 +279,11 @@ namespace ShearBoxController_InspectXContinuousScan
                             new EventHandler<CommunicationsChannel_Application.EventArgsInspectXAlarms>(EventHandlerInspectXAlarms);
                     }
 
+                    if (mChannels.Xray != null)
+                    {
+                        mChannels.Xray.mEventSubscriptionHeartbeat.Event -=
+                            new EventHandler<CommunicationsChannel_XRay.EventArgsHeartbeat>(EventHandlerHeartbeatXRay);
+                    }
 
                     if (mChannels.Manipulator != null)
                     {
@@ -311,6 +322,7 @@ namespace ShearBoxController_InspectXContinuousScan
             try
             {
                 if (mChannels == null || mChannels.Application == null)
+                    mInspectXConnectionState = Channels.EConnectionState.Error;
                     return;
                 if (this.InvokeRequired)
                     this.BeginInvoke((MethodInvoker)delegate { EventHandlerHeartbeatApp(aSender, e); });
@@ -323,17 +335,38 @@ namespace ShearBoxController_InspectXContinuousScan
             catch (Exception ex) { AppLog.LogException(ex); }
         }
 
+        void EventHandlerHeartbeatXRay(object aSender, CommunicationsChannel_XRay.EventArgsHeartbeat e)
+        {
+            try
+            {
+                if (mChannels == null || mChannels.Xray == null)
+                    mInspectXConnectionState = Channels.EConnectionState.Error;
+                    return;
+                if (this.InvokeRequired)
+                    this.BeginInvoke((MethodInvoker)delegate { EventHandlerHeartbeatXRay(aSender, e); });
+                else
+                {
+                    //your code goes here....
+                    mInspectXConnectionState = Channels.EConnectionState.Connected;
+                }
+            }
+            catch (ObjectDisposedException) { } // ignore
+            catch (Exception ex) { AppLog.LogException(ex); }
+        }
+
         void EventHandlerHeartbeatMan(object aSender, CommunicationsChannel_Manipulator.EventArgsHeartbeat e)
         {
             try
             {
                 if (mChannels == null || mChannels.Manipulator == null)
+                    mInspectXConnectionState = Channels.EConnectionState.Error;
                     return;
                 if (this.InvokeRequired)
                     this.BeginInvoke((MethodInvoker)delegate { EventHandlerHeartbeatMan(aSender, e); });
                 else
                 {
                     //your code goes here....
+                    mInspectXConnectionState = Channels.EConnectionState.Connected;
                 }
             }
             catch (ObjectDisposedException) { } // ignore
@@ -345,12 +378,14 @@ namespace ShearBoxController_InspectXContinuousScan
             try
             {
                 if (mChannels == null || mChannels.CT3DScan == null)
+                    mInspectXConnectionState = Channels.EConnectionState.Error;
                     return;
                 if (this.InvokeRequired)
                     this.BeginInvoke((MethodInvoker)delegate { EventHandlerHeartbeatCT3DScan(aSender, e); });
                 else
                 {
                     //your code goes here....
+                    mInspectXConnectionState = Channels.EConnectionState.Connected;
                 }
             }
             catch (ObjectDisposedException) { } // ignore
@@ -376,7 +411,8 @@ namespace ShearBoxController_InspectXContinuousScan
                     switch (e.Status)
                     {
                         case Inspect_X_Definitions.InspectXStatus.AutoConditioning:
-                            //Your code goes here...
+                            // Set Inspect-X state
+                            mInspectXState = EInspectXState.AutoCondition;
                             break;
                         case Inspect_X_Definitions.InspectXStatus.AutomaticDoorOpen:
                             //Your code goes here...
@@ -666,6 +702,7 @@ namespace ShearBoxController_InspectXContinuousScan
                         {
                             // CT scan completed (status)
                             StatusHandler3DCTAcquistionCompleted(e.Status as Inspect_X_Definitions.CTStatusAcquisitionCompleted);
+                            
                         }
                         else if (e.Status is Inspect_X_Definitions.CTStatusReconstructing)
                         {
@@ -841,6 +878,8 @@ namespace ShearBoxController_InspectXContinuousScan
                         break;
                     case Inspect_X_Definitions.CTStatusAcquisitionCompleted.CTAcquisitionError.NoError:
                         DisplayLog("Acquisition complete");
+                        // Keep source on with autocondition
+                        mChannels.Xray.AutoCondition.StartEnhanced(-1);
                         break;
                     case Inspect_X_Definitions.CTStatusAcquisitionCompleted.CTAcquisitionError.CTAbortedAsNoXrays:
                         // Your code goes here
@@ -1728,6 +1767,10 @@ namespace ShearBoxController_InspectXContinuousScan
                         box_CurrentInspectXState.BackColor = Color.Blue;
                         box_CurrentInspectXState.Text = "Shading Correction";
                         break;
+                    case EInspectXState.AutoCondition:
+                        box_CurrentInspectXState.BackColor = Color.Blue;
+                        box_CurrentInspectXState.Text = "Auto Condition";
+                        break;
                     case EInspectXState.CTScanAcquiring:
                         box_CurrentInspectXState.BackColor = Color.Blue;
                         box_CurrentInspectXState.Text = "Acquiring CT Scan";
@@ -2060,6 +2103,10 @@ namespace ShearBoxController_InspectXContinuousScan
 
         void XCTScan(string ScanName)
         {
+
+            // Stop Auto-condition
+            mChannels.Xray.AutoCondition.Stop();
+            mInspectXState = EInspectXState.Idle;
 
             // Update running state
             mRunningState = ERunningState.CTScan;

@@ -76,6 +76,12 @@ namespace ShearBoxController_InspectXContinuousScan
         /// <summary> List of CT profiles </summary>
         private List<string> mCTProfileList = null;
 
+        /// <summary> Auto Condition Parameters </summary>
+        private IpcContract.XRay.AutoConditionParameters mAutoConditionParam;
+
+        private Thread mAutoConditionRunningThread = null;
+        private Thread mAutoConditionStopThread = null;
+
         #endregion Profile variables
 
         #region Project settings
@@ -322,8 +328,10 @@ namespace ShearBoxController_InspectXContinuousScan
             try
             {
                 if (mChannels == null || mChannels.Application == null)
+                {
                     mInspectXConnectionState = Channels.EConnectionState.Error;
                     return;
+                }
                 if (this.InvokeRequired)
                     this.BeginInvoke((MethodInvoker)delegate { EventHandlerHeartbeatApp(aSender, e); });
                 else
@@ -340,8 +348,10 @@ namespace ShearBoxController_InspectXContinuousScan
             try
             {
                 if (mChannels == null || mChannels.Xray == null)
+                {
                     mInspectXConnectionState = Channels.EConnectionState.Error;
                     return;
+                }
                 if (this.InvokeRequired)
                     this.BeginInvoke((MethodInvoker)delegate { EventHandlerHeartbeatXRay(aSender, e); });
                 else
@@ -359,8 +369,10 @@ namespace ShearBoxController_InspectXContinuousScan
             try
             {
                 if (mChannels == null || mChannels.Manipulator == null)
+                {
                     mInspectXConnectionState = Channels.EConnectionState.Error;
                     return;
+                }
                 if (this.InvokeRequired)
                     this.BeginInvoke((MethodInvoker)delegate { EventHandlerHeartbeatMan(aSender, e); });
                 else
@@ -378,8 +390,10 @@ namespace ShearBoxController_InspectXContinuousScan
             try
             {
                 if (mChannels == null || mChannels.CT3DScan == null)
+                {
                     mInspectXConnectionState = Channels.EConnectionState.Error;
                     return;
+                }
                 if (this.InvokeRequired)
                     this.BeginInvoke((MethodInvoker)delegate { EventHandlerHeartbeatCT3DScan(aSender, e); });
                 else
@@ -411,8 +425,7 @@ namespace ShearBoxController_InspectXContinuousScan
                     switch (e.Status)
                     {
                         case Inspect_X_Definitions.InspectXStatus.AutoConditioning:
-                            // Set Inspect-X state
-                            mInspectXState = EInspectXState.AutoCondition;
+                            //Your code goes here...
                             break;
                         case Inspect_X_Definitions.InspectXStatus.AutomaticDoorOpen:
                             //Your code goes here...
@@ -702,7 +715,7 @@ namespace ShearBoxController_InspectXContinuousScan
                         {
                             // CT scan completed (status)
                             StatusHandler3DCTAcquistionCompleted(e.Status as Inspect_X_Definitions.CTStatusAcquisitionCompleted);
-                            
+
                         }
                         else if (e.Status is Inspect_X_Definitions.CTStatusReconstructing)
                         {
@@ -742,7 +755,6 @@ namespace ShearBoxController_InspectXContinuousScan
                         else if (e.Status is Inspect_X_Definitions.CTStatusCompleted)
                         {
                             mCTScanCompleted = true;
-                            mInspectXState = EInspectXState.Idle;
                             UpdateUI();
                         }
 
@@ -878,8 +890,13 @@ namespace ShearBoxController_InspectXContinuousScan
                         break;
                     case Inspect_X_Definitions.CTStatusAcquisitionCompleted.CTAcquisitionError.NoError:
                         DisplayLog("Acquisition complete");
-                        // Keep source on with autocondition
-                        mChannels.Xray.AutoCondition.StartEnhanced(-1);
+
+                        // Start Auto conditioning using new thread
+                        mAutoConditionRunningThread = new Thread(StartAutoCondition);
+                        mAutoConditionRunningThread.Name = "Auto Condition Thread";
+                        mAutoConditionRunningThread.Start();
+
+                        UpdateUI();
                         break;
                     case Inspect_X_Definitions.CTStatusAcquisitionCompleted.CTAcquisitionError.CTAbortedAsNoXrays:
                         // Your code goes here
@@ -2103,11 +2120,6 @@ namespace ShearBoxController_InspectXContinuousScan
 
         void XCTScan(string ScanName)
         {
-
-            // Stop Auto-condition
-            mChannels.Xray.AutoCondition.Stop();
-            mInspectXState = EInspectXState.Idle;
-
             // Update running state
             mRunningState = ERunningState.CTScan;
             // Layout UI
@@ -2228,6 +2240,18 @@ namespace ShearBoxController_InspectXContinuousScan
                     Thread.Sleep(100);
             }
 
+            // Set auto-condition settings
+            mAutoConditionParam.mHoldTime = 5;
+            int kVdemand = (int) mChannels.Xray.XRays.KilovoltsDemand();
+            if (kVdemand - 50 > 0)
+                mAutoConditionParam.mStartkV = (int)mChannels.Xray.XRays.KilovoltsDemand();
+            else
+                mAutoConditionParam.mStartkV = kVdemand;
+            mAutoConditionParam.mMaxkV = (int)mChannels.Xray.Head.MaximumKilovolts();
+            mAutoConditionParam.mVacuumDelta1 = 1;
+            mAutoConditionParam.mVacuumDelta2 = 5;
+            mAutoConditionParam.mkVChangeStepSize = 5;
+
             // Update shading corrections
             DisplayLog("Updating shading corrections...");
             //Debug.Print(DateTime.Now.ToString("dd/MM/yyyy H:mm:ss.fff") + " : " + "Current Position=" +
@@ -2245,11 +2269,17 @@ namespace ShearBoxController_InspectXContinuousScan
             mShadingCorrectionCompleted = false;
             UpdateUI();
             Inspect_X_Definitions.ShadingCorrectionResponse scResponse = mChannels.CT3DScan.UpdateShadingCorrection(mCTProfile);
-            // Wait until shading corrections finish
-            while (!mShadingCorrectionCompleted && !backgroundWorker_MainRoutine.CancellationPending)
-                Thread.Sleep(100);
-            if (!backgroundWorker_MainRoutine.CancellationPending)
-                DisplayLog("Shading corrections updated");
+
+            if (scResponse is Inspect_X_Definitions.ShadingCorrectionResponseOK)
+            {
+                // Wait until shading corrections finish
+                while (!mShadingCorrectionCompleted && !backgroundWorker_MainRoutine.CancellationPending)
+                    Thread.Sleep(100);
+                if (!backgroundWorker_MainRoutine.CancellationPending)
+                    DisplayLog("Shading corrections updated");
+            }
+            else
+                mInspectXState = EInspectXState.Error;
 
             // Start first XCT scan and start timers
             StartXCTScan();
@@ -2274,6 +2304,12 @@ namespace ShearBoxController_InspectXContinuousScan
 
             // Stop timers
             StopTimers();
+
+            // Stop auto-conditioning
+            DisplayLog("Stopping auto-conditioning in time for scan");
+            mAutoConditionStopThread = new Thread(StopAutoCondition);
+            mAutoConditionStopThread.Name = "Auto condition stop thread";
+            mAutoConditionStopThread.Start();
 
             // Create complete log file
             WriteOutputFile(@"output.log", mOutputLogText);
@@ -2412,6 +2448,8 @@ namespace ShearBoxController_InspectXContinuousScan
         {
             // Set CT Scan timer elapse interval
             timer_CTScanInterval.Interval = mTimerInterval * 1000;
+            // Set Auto conditioning stop interval to be 10 seconds less than CT scan elapse interval
+            timer_StopAutoCondition.Interval = (mTimerInterval - 10) * 1000;
             // Set Timer state
             mTimerState = ETimerState.Running;
             // Start timers
@@ -2420,12 +2458,14 @@ namespace ShearBoxController_InspectXContinuousScan
                 {
                     timer_General.Start();
                     timer_CTScanInterval.Start();
+                    timer_StopAutoCondition.Start();
                     TimingWatch = Stopwatch.StartNew();
                 });
             else
             {
                 timer_General.Start();
                 timer_CTScanInterval.Start();
+                timer_StopAutoCondition.Start();
                 TimingWatch = Stopwatch.StartNew();
             }
             // Update UI
@@ -2446,12 +2486,14 @@ namespace ShearBoxController_InspectXContinuousScan
                 {
                     timer_General.Stop();
                     timer_CTScanInterval.Stop();
+                    timer_StopAutoCondition.Stop();
                     TimingWatch.Stop();
                 });
             else
             {
                 timer_General.Stop();
                 timer_CTScanInterval.Stop();
+                timer_StopAutoCondition.Stop();
                 TimingWatch.Stop();
                 TimingWatch.Reset();
             }
@@ -2494,6 +2536,37 @@ namespace ShearBoxController_InspectXContinuousScan
             DisplayLog("Timer tick");
             if (!backgroundWorker_XCTScan.IsBusy)
                 StartXCTScan();
+        }
+
+        private void timer_StopAutoCondition_Tick(object sender, EventArgs e)
+        {
+            DisplayLog("Stopping auto-conditioning in time for scan");
+            mAutoConditionStopThread = new Thread(StopAutoCondition);
+            mAutoConditionStopThread.Name = "Auto condition stop thread";
+            mAutoConditionStopThread.Start();
+        }
+
+        /// <summary>
+        /// Start auto conditioning
+        /// </summary>
+        private void StartAutoCondition()
+        {
+            DisplayLog("Starting auto-conditioning");
+            // Keep source on with autocondition
+            mChannels.Xray.AutoCondition.StartEnhanced(mAutoConditionParam, -1);
+            // Set Inspect-X state
+            mInspectXState = EInspectXState.AutoCondition;
+            Application.DoEvents();
+        }
+
+        /// <summary>
+        /// Stop auto conditioning
+        /// </summary>
+        private void StopAutoCondition()
+        {
+            // Stop Auto-condition
+            mChannels.Xray.AutoCondition.Stop();
+            mInspectXState = EInspectXState.Idle;
         }
 
 

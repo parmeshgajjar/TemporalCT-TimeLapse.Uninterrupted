@@ -88,6 +88,7 @@
             this.timer_CTScanInterval = new System.Windows.Forms.Timer(this.components);
             this.timer_General = new System.Windows.Forms.Timer(this.components);
             this.backgroundWorker_XCTScan = new System.ComponentModel.BackgroundWorker();
+            this.timer_StopAutoCondition = new System.Windows.Forms.Timer(this.components);
             this.panel_CTProfile.SuspendLayout();
             this.panel_InspectXConnection.SuspendLayout();
             this.panel_SystemStatus.SuspendLayout();
@@ -685,6 +686,10 @@
             this.backgroundWorker_XCTScan.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_XCTScan_DoWork);
             this.backgroundWorker_XCTScan.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_XCTScan_RunWorkerCompleted);
             // 
+            // timer_StopAutoCondition
+            // 
+            this.timer_StopAutoCondition.Tick += new System.EventHandler(this.timer_StopAutoCondition_Tick);
+            // 
             // TimeLapse_FlyScanForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -786,6 +791,7 @@
         private System.Windows.Forms.Timer timer_CTScanInterval;
         private System.Windows.Forms.Timer timer_General;
         private System.ComponentModel.BackgroundWorker backgroundWorker_XCTScan;
+        private System.Windows.Forms.Timer timer_StopAutoCondition;
 	}
 }
 

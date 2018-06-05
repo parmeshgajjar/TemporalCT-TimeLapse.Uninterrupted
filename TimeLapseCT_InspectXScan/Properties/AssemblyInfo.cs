@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("Copyright © 2014-2016 Nikon Metrology NV")]
 [assembly: AssemblyVersion("5.1.*")]	// Either "MajorV,MinorV,BuildNo,Rev" OR "M.M.*" where * encode date & time
 [assembly: AssemblyCompany("The University of Manchester")]
-[assembly: AssemblyProduct("XT 5.1.4")]
-[assembly: AssemblyTitle("Time-Lapse CT using Inspect-X Continuous Rotation CT Scan")]
+[assembly: AssemblyProduct("XT 5.1.4.3")]
+[assembly: AssemblyTitle("Software Extension for Automated Time-lapse CT")]
 
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]

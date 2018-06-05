@@ -704,7 +704,7 @@
             this.Controls.Add(this.btn_Start);
             this.Controls.Add(this.btn_Stop);
             this.Name = "TimeLapse_FlyScanForm";
-            this.Text = "TimeLapse - Inspect-X Continuous Rotating Scan";
+            this.Text = "Automated Time-lapse CT";
             this.panel_CTProfile.ResumeLayout(false);
             this.panel_CTProfile.PerformLayout();
             this.panel_InspectXConnection.ResumeLayout(false);
